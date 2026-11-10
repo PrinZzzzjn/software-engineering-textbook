@@ -432,17 +432,6 @@ $ uvicorn main:app --port 8000
 - 本章不设独立习题——课次 4 的书面检查就是课前自检 5 题，与第 4 章共用，不计入书末总题数。
 - 5.9 的最小工程三个文件是第 7–15 章代码的地图：`router` 从哪来、结构在哪约束、公共逻辑在哪复用。
 
-## 换场景总表：从最小工程到 duty 项目
-
-| 最小工程里的写法 | 换到 duty 实战的位置 |
-| --- | --- |
-| `router = APIRouter(prefix="/departments")` | 第 7 章：`app/routers/` 下每个业务模块一个 router |
-| `DepartmentCreate` / `DepartmentOut` | 第 8 章：`UserCreate` / `UserOut`（多一条“绝不返回 `password_hash`”） |
-| `Depends(get_db)`（字典假库） | 第 7 章起：换成 SQLAlchemy 的真 `Session`（见 5.7） |
-| `raise HTTPException(404, ...)` | 第 8–15 章：401/403/404/400 等所有规则性失败 |
-| `response_model` 滤掉多余字段 | 第 8 章输出模型、第 10–11 章分页返回 |
-| `/docs` 自动文档 | 前后端联调参照；第 14 章接口测试的对照表 |
-
 ## 自检答案页
 
 **自检 5-1**：问题一，删除动作用 POST 承载，语义错位；问题二，URL 里出现动词 `delete`。改法：`DELETE /api/v1/departments/1`，成功返回 204。（考查：第 4 章 4.1.5）

@@ -6,9 +6,10 @@
 2. 重写「本章学习目标」（4–6 条三维目标，逐章不同，消除重复）；
 3. 学习目标后插入「前置知识卡」；
 4. 独立习题后插入课次块（T=◇ 课堂活动块四段 / P=◆ 实训块七段）；
-5. 本章小结后追加「换场景总表 / 质量评价 / 本章提示页」；
-   2026-11-10 口径变更：不再注入「AI 侧栏」，AI 内容只保留在附录 L（选读）；
-6. 把 `<details>` 提示转成静态「本章提示页」，并给所有代码块补编号。
+5. 本章小结后不追加章末部件；
+   2026-11-10 口径变更：换场景总表 / 章末评价 / 本章提示页 / AI 侧栏
+   四类章末部件全部取消，重跑本脚本不得把它们加回来（AI 内容只保留在附录 L 选读）；
+6. 移除 `<details>` 提示内容，并给所有代码块补编号。
 
 只处理需要铺开的章；04/05/08/15 已是样板或已合并，跳过。
 """
@@ -618,17 +619,8 @@ def convert_details(text):
     return text, hints
 
 def render_hints(hints):
-    """把提示按“例题 → 提示1/2/完整解答”分组渲染。"""
-    if not hints:
-        return ''
-    out = ['## 本章提示页', '', '> 先自己做，卡住了再看。提示按“方向 → 关键步骤 → 完整解答”排列。', '']
-    last = None
-    for ex, title, body in hints:
-        if ex and ex != last:
-            out += [f'**{ex}**', '']
-            last = ex
-        out += [f'**{title}**', '', body, '']
-    return '\n'.join(out)
+    """2026-11-10 口径变更：本章提示页取消，<details> 提示内容不再渲染。"""
+    return ''
 
 def build(ch):
     p = next(BOOK.glob(f'{ch}-*.md'))
@@ -638,8 +630,8 @@ def build(ch):
 
     # 1 节首信息条
     kind_line = f'对应课次 {d["lesson"]} · {d["hours"]} 学时 · {d["kind"]}'
-    info = (f'> **节首信息条**｜{kind_line}｜前置：{d["prereq"]}｜'
-            f'章末有{"质量评价量表" if d["typ"] == "P" else "评价要点与自评"}及本章提示页')
+    # 2026-11-10 口径变更：章末评价 / 本章提示页取消，信息条不再预告章末部件。
+    info = f'> **节首信息条**｜{kind_line}｜前置：{d["prereq"]}'
     text = re.sub(r'^(# .+)\n', lambda m: f'{m.group(1)}\n\n{info}\n', text, count=1, flags=re.M)
 
     # 2 学习目标
@@ -682,22 +674,9 @@ def build(ch):
     # 插在本章小结前
     text = text.replace('## 本章小结', block_text + '\n\n## 本章小结', 1)
 
-    # 5 小结后追加
-    scale_rows = '\n'.join(f'| {a} | {b} | {w} |' for a, b, w in d['scale'])
-    if d['typ'] == 'P':
-        evaluation = ('## 章末质量评价量表（本实训）\n\n'
-                      '| 维度 | 分档描述 | 权重 |\n| --- | --- | ---: |\n' + scale_rows +
-                      '\n| **合计** | | **100%** |\n\n'
-                      '评价方式：自评 30% + 互评 30% + 师评 40%。\n\n'
-                      '**一票否决**：涉密信息未脱敏、安全漏洞不处理、提交记录造假——出现任一项，本实训记不通过。\n')
-    else:
-        evaluation = ('## 章末评价要点（自评）\n\n'
-                      '| 评价维度 | 达标标志 | 权重 |\n| --- | --- | ---: |\n' + scale_rows +
-                      '\n| **合计** | | **100%** |\n\n'
-                      '自评后对照本章习题与自检清单，标出未达标项并回看对应小节。\n')
-    swaps = '## 换场景总表\n\n| 本章场景 | 换成其他场景 |\n| --- | --- |\n' + '\n'.join(f'| {a} | {b} |' for a, b in d['swaps']) + '\n'
-    # 2026-11-10 口径变更：章内不设 AI 侧栏，重跑本脚本不得把它加回来。
-    text += '\n' + swaps + '\n' + evaluation + '\n'
+    # 5 小结后追加（2026-11-10 口径变更）
+    # 换场景总表 / 章末评价 / 本章提示页 / AI 侧栏四类章末部件已全部取消，
+    # 重跑本脚本不得把它们加回来；DATA 中的 scale / swaps / ai 数据保留但不再消费。
 
     # 6 自检替换（逐目标）
     checks = []
@@ -716,11 +695,9 @@ def build(ch):
     text = re.sub(r'\*\*与持久理解的呼应\*\*：.*?(?=\n\*\*自检\*\*|\n\*\*下一章预告\*\*|\Z)',
                   f'**学完本章，你可以体会到**：{tk}', text, flags=re.S)
 
-    # 7 details → 提示页；代码编号
+    # 7 移除 details 提示内容；代码编号（2026-11-10 起不再渲染本章提示页）
     text, hints = convert_details(text)
     text = caption_code_blocks(text, n)
-    if hints:
-        text = text.rstrip() + '\n\n' + render_hints(hints) + '\n'
     p.write_text(text, encoding='utf-8')
     print(f'{p.name}: goals={len(d["goals"])} hints={len(hints)} ok')
 

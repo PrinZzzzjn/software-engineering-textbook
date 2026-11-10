@@ -145,12 +145,12 @@ def _structure_one(p):
         '节首信息条': '对应课次' in t,
         '学习目标': bool(re.search(r'^## 本章学习目标', t, re.M)),
         '代码编号': _code_caption_ok(t),
-        '换场景总表': '换场景' in t,
-        '章末提示页': ('提示页' in t or '本章提示' in t),
-        '质量评价': ('量表' in t or '评价维度' in t),
-        # 2026-11-10 口径变更：章内不再设 AI 侧栏，判据反向防回归
-        # （原判据要求章节出现「AI / 了解性」，与去侧栏后的正文冲突）。
-        '无AI侧栏': ('## AI 侧栏' not in t and 'AI 了解性侧栏' not in t),
+        # 2026-11-10 口径变更：换场景总表 / 章末评价 / 本章提示页 / AI 侧栏
+        # 四类章末部件全部取消，判据反向，防止体例脚本重跑时回归。
+        '无换场景总表': not re.search(r'^## 换场景总表', t, re.M),
+        '无章末评价': not re.search(r'^## 章末(评价要点|质量评价量表)', t, re.M),
+        '无本章提示页': not re.search(r'^## 本章提示页', t, re.M),
+        '无AI侧栏': not re.search(r'^## AI 侧栏', t, re.M) and 'AI 了解性侧栏' not in t,
     }
     return need
 
