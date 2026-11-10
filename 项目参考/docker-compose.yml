@@ -1,0 +1,51 @@
+# duty 前后端容器化编排示例（专题四参考）
+#
+# 使用：
+#   cd 项目参考
+#   docker compose up --build
+# 后端：http://localhost:8000/docs
+# 前端：http://localhost:8501
+#
+# 说明：
+# - 后端镜像内已包含示例数据库 duty.db，首次启动即可用 admin/admin123 登录；
+# - SECRET_KEY 仅为课堂示例，生产环境必须通过安全的配置方式注入；
+# - 前端通过 DUTY_API_BASE_URL 访问后端，容器间使用服务名 backend。
+
+name: duty-system
+
+services:
+  backend:
+    build:
+      context: ./duty
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: sqlite:///./duty.db
+      SECRET_KEY: change-me-in-production
+      ALGORITHM: HS256
+      DEBUG: "False"
+    volumes:
+      # 把容器内日志映射出来，便于课次26讲解日志排查
+      - ./duty/logs:/app/logs
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./duty_frontend
+    ports:
+      - "8501:8501"
+    environment:
+      # 容器内用服务名访问后端，不是 localhost
+      DUTY_API_BASE_URL: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy

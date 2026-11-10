@@ -1,0 +1,19 @@
+{
+  "textbook_name": "软件工程实践",
+  "subject": "软件工程（Web 应用开发实践）",
+  "subject_profile": "stem",
+  "answer_layout": "separate",
+  "created_at": "2026-11-09",
+  "updated_at": "2026-11-09",
+  "current_stage": 5,
+  "gates": {
+    "stage2_ubd_confirmed": true,
+    "stage3_outline_confirmed": true
+  },
+  "chapters": {
+    "total": 26,
+    "done": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26],
+    "next": 27
+  },
+  "stage5_passed": true
+}

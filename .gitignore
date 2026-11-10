@@ -1,0 +1,28 @@
+# Python 虚拟环境、缓存与编译产物（项目参考/ 下含两个完整 venv）
+**/venv/
+**/.venv/
+**/__pycache__/
+*.py[cod]
+*.typed
+*.exe
+*.dll
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# 嵌套仓库停用后的历史目录（保留在磁盘，不入库；改回 .git 即可恢复）
+**/.git.disabled/
+
+# 本地环境与密钥
+.env
+.env.*
+!.env.example
+
+# WorkBuddy 本地会话数据（保留在磁盘，不纳入版本控制）
+.workbuddy/
+
+# 编辑器与系统文件
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
