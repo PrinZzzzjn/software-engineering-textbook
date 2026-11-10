@@ -274,7 +274,7 @@ SQL 一句话补课：`SELECT * FROM departments WHERE dept_code = 'D01'` 对应
 | --- | --- | --- | --- |
 | JWT 通行证 | 登录后发的带签名令牌 | 第 8 章 8.1.6 | 第 8、14、15 章 |
 | passlib 密码哈希 | 存哈希不存明文 | 第 8 章 8.1.3 | 第 8 章 |
-| 权限依赖 require_admin | 在认证之外再包一层 | 第 8 章 8.1.8 | 第 9 章 |
+| 权限依赖 get_current_admin_user | 在认证之外再包一层 | 第 8 章 8.1.8 | 第 9 章 |
 | ORM 建表与增删查改 | Base / Session / get_db 认脸 | 第 7 章建库、第 10 章增删查改 | 第 8–15 章 |
 | SECRET_KEY / ALGORITHM | 签名密钥与算法放配置 | 第 7 章配置节、第 8 章 8.1.6 | 第 8 章 |
 | TestClient 接口测试 | 不启动服务发起真实调用 | 第 4 章例 4-3、第 14 章 | 第 14 章 |
