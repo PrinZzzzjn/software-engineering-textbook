@@ -1,45 +1,49 @@
 # 第 5 章 FastAPI 核心机制
 
-> **节首信息条**｜对应课次 4 · 后端开发框架基础（与第 4 章合占 2 学时，只计一次）｜**本单元第 2/2 章**｜章节类型：**课前阅读章**——课前通读（每节 3–8 分钟），课内安排 10–15 分钟检查答疑，不单独占用学时｜前置：第 4 章《HTTP 与接口设计》；Python 语法看不懂不要慌，本章的补课卡会补
+> **节首信息条**｜对应课次 4 · 后端开发框架基础（与第 4 章合占 2 学时 · 理论讲授，只计一次）｜**本单元第 2/2 章**｜前置：第 4 章《HTTP 与接口设计》；Python 语法不熟不要慌，本章的补课卡会补｜**本节活动**：◇ 课堂活动块（听讲要点 / 讨论·演示 / 课后自测 / 回链）
 
 第 4 章末尾用 `@app.get` 写了两个最小接口。但从第 7 章的项目初始化开始，实战代码会连续出现一批新面孔：`APIRouter`、`BaseModel`、`Field`、`Depends`、`HTTPException`、`get_db`……如果这些符号第一次见面就出现在整屏代码里，你只能“照着敲”，不知道每一行为什么存在。
 
-本章把这些机制集中讲一遍：每节只讲一件事，配一张 150–200 字的补课卡。读完本章，第 7–15 章的后端代码你都能“读得懂、改得动”。
+本章把这些机制集中讲一遍：每节只讲一件事，配一张 150–200 字的补课卡。读到看不懂的 Python 语法（装饰器、类型注解、`Optional`），直接跳到该节末尾的补课卡，看完再回来——卡片就是为“绕路”设计的。5.1.9 的完整最小工程建议在自己电脑上敲一遍：只敲三个文件，就能把 5.1.2–5.1.6 的机制全部摸一遍。读完本章，第 7–15 章的后端代码你都能“读得懂、改得动”。
 
 ## 本章学习目标
 
-读完第 5 章（课前阅读），你应该能：
+读完第 5 章，你应该能：
 
 1. 用一句话说明 FastAPI 是什么、本书为什么选它而不是 Flask 或 Django。
 2. 解释 `@app.get("...")` 装饰器把“URL + 方法”与函数绑定的过程，并读懂带类型注解的函数签名。
 3. 说出 `APIRouter` 与 `include_router` 各自解决的问题，指出 `router` 对象从哪里来。
 4. 用 `BaseModel` 与 `Field` 定义一个带约束的输入模型，并解释 422 错误产生在哪一层。
 5. 说明 `Depends` “把公共逻辑抽成参数”的含义，能看懂 `get_db` 一类的依赖写法。
-6. 对照 5.8 节的回链表，说出 JWT、ORM 等概念分别会在哪一章完整展开。
+6. 对照 5.1.8 节的回链表，说出 JWT、ORM 等概念分别会在哪一章完整展开。
 
-## 前置知识卡（8 张补课卡索引）
+## 前置知识卡
 
-本章不预设你会高级 Python 语法——缺什么补什么，每节末尾的补课卡就是为此准备的：
+开始本章前，请确认你已经具备：
+
+| # | 你需要会 | 不会就回看 |
+| --- | --- | --- |
+| 1 | HTTP 方法、状态码与接口四要素 | 第 4 章 4.1.2–4.1.7 |
+| 2 | Python 函数、字典与 f 字符串 | 附录 A《Python 基础》 |
+| 3 | 在终端进入目录、执行命令 | 附录 A《Python 基础》 |
+| 4 | 装饰器与类型注解（只要求看懂） | 本章 5.1.2、补课卡 K-01、K-02 |
+
+本章不预设你会高级 Python 语法——缺什么补什么，各节末尾的补课卡就是为此准备的。8 张补课卡与所在节的对照如下：
 
 | 卡号 | 主题 | 所在节 |
 | --- | --- | --- |
-| K-01 | 装饰器 | 5.2 |
-| K-02 | Python 类与类型注解 | 5.2 |
-| K-03 | APIRouter | 5.3 |
-| K-04 | Pydantic | 5.4 |
-| K-05 | HTTPException | 5.5 |
-| K-06 | Depends 与依赖注入 | 5.6 |
-| K-07 | ORM 与 SQLAlchemy | 5.7 |
-| K-08 | Optional 与 Literal | 5.7 |
+| K-01 | 装饰器 | 5.1.2 |
+| K-02 | Python 类与类型注解 | 5.1.2 |
+| K-03 | APIRouter | 5.1.3 |
+| K-04 | Pydantic | 5.1.4 |
+| K-05 | HTTPException | 5.1.5 |
+| K-06 | Depends 与依赖注入 | 5.1.6 |
+| K-07 | ORM 与 SQLAlchemy | 5.1.7 |
+| K-08 | Optional 与 Literal | 5.1.7 |
 
-## 本章阅读提示页
+## 5.1 概念讲解
 
-- 每节 3–8 分钟。一次读不完就按节推进，不必按页码硬啃。
-- 读到看不懂的 Python 语法（装饰器、类型注解、`Optional`），直接跳到该节末尾的补课卡，看完再回来——卡片就是为“绕路”设计的。
-- 5.9 的完整最小工程建议在自己电脑上敲一遍：只敲三个文件，就能把 5.2–5.6 的机制全部摸一遍。
-- 「课前自检」放在全部读完之后、上课之前完成；课内检查答疑主要针对自检出错的同学。
-
-## 5.1 FastAPI 是什么，为什么选它
+### 5.1.1 FastAPI 是什么，为什么选它
 
 FastAPI 是一个用 Python 写 Web 接口的框架：你定义函数，它负责把 HTTP 请求接进来、把返回值变成 JSON。与另外两个常见框架的一句话对比：
 
@@ -51,11 +55,11 @@ FastAPI 是一个用 Python 写 Web 接口的框架：你定义函数，它负�
 
 本书选 FastAPI 的理由就两条：参数校验写在函数签名里，不用手写一堆 `if`；接口文档自动生成，联调时前后端有共同参照。什么时候不用它？如果产品是“以页面为主、接口很少”的传统网站，Django 那套全家桶反而省事。
 
-## 5.2 app 实例与装饰器路由
+### 5.1.2 app 实例与装饰器路由
 
 第 4 章已经见过这两段代码，这里把机制说透。
 
-**代码 5-2-1** · `main.py`（最小应用，Python）
+**代码 5-1-1** · `main.py`（最小应用，Python）
 
 ```python
 from fastapi import FastAPI
@@ -83,11 +87,11 @@ def hello(name: str):
 > **最小例子**：`def add(a: int, b: int) -> int: return a + b`。
 > **什么时候用**：写 FastAPI 接口时几乎每个函数签名都要用；暂时不会写复杂的类，不影响学本书。
 
-## 5.3 APIRouter：把路由拆到各模块
+### 5.1.3 APIRouter：把路由拆到各模块
 
 项目变大后，几十个接口都挂在 `app` 上，`main.py` 会乱成一团长文件。`APIRouter` 是“小一号的挂载点”：各业务模块各自建一个 `router`，写好自己的接口；主文件再用 `include_router` 把它们组装回 `app`。
 
-**代码 5-3-1** · `app/routers/departments.py`（路由模块，Python）
+**代码 5-1-2** · `app/routers/departments.py`（路由模块，Python）
 
 ```python
 from fastapi import APIRouter
@@ -99,7 +103,7 @@ def list_departments():
     return {"items": [], "total": 0}
 ```
 
-**代码 5-3-2** · `main.py`（组装，Python）
+**代码 5-1-3** · `main.py`（组装，Python）
 
 ```python
 from fastapi import FastAPI
@@ -119,11 +123,11 @@ app.include_router(departments.router, prefix="/api/v1")
 > **最小例子**：`router = APIRouter(prefix="/departments")`，然后 `@router.get("")`。
 > **什么时候用**：从第 7 章起，本书每个业务模块一个 router 文件，`main.py` 只负责组装。
 
-## 5.4 三类参数与 Pydantic 模型
+### 5.1.4 三类参数与 Pydantic 模型
 
 接口的参数只有三个位置：路径、查询串、请求体。
 
-**代码 5-4-1** · `app/routers/departments.py`（三类参数，Python）
+**代码 5-1-4** · `app/routers/departments.py`（三类参数，Python）
 
 ```python
 @router.get("/{dept_id}")                     # ① 路径参数：定位“某一个”
@@ -141,7 +145,7 @@ def create_department(data: DepartmentCreate):
 
 ③ 的 `DepartmentCreate` 是一个 Pydantic 模型——请求体不再是零散参数，而是一个有名字、有约束的结构：
 
-**代码 5-4-2** · `schemas.py`（输入模型，Python）
+**代码 5-1-5** · `schemas.py`（输入模型，Python）
 
 ```python
 from pydantic import BaseModel, Field
@@ -162,9 +166,9 @@ class DepartmentCreate(BaseModel):
 > **最小例子**：`class DepartmentCreate(BaseModel): dept_code: str = Field(..., min_length=2)`。
 > **什么时候用**：所有 POST/PUT 接口的请求体，以及需要控制返回字段的响应模型。
 
-## 5.5 响应模型、HTTPException 与自动文档
+### 5.1.5 响应模型、HTTPException 与自动文档
 
-**代码 5-5-1** · 响应模型与错误返回（Python）
+**代码 5-1-6** · 响应模型与错误返回（Python）
 
 ```python
 from fastapi import Depends, HTTPException
@@ -182,7 +186,7 @@ def read_department(dept_id: int, db: dict = Depends(get_db)):
     return db[dept_id]
 ```
 
-下面这段是机制示意，不是可直接运行的完整工程：`router` 来自 5.3 的 `APIRouter`，`get_db` 见 5.6 与 5.9 的 `deps.py`，完整可运行版本见 5.9。三个机制（`db` 参数的写法下一节讲）：
+下面这段是机制示意，不是可直接运行的完整工程：`router` 来自 5.1.3 的 `APIRouter`，`get_db` 见 5.1.6 与 5.1.9 的 `deps.py`，完整可运行版本见 5.1.9。三个机制（`db` 参数的写法下一节讲）：
 
 - `response_model=DepartmentOut`：返回值先过一遍输出模型，多出的字段会被滤掉。这解释了第 8 章“为什么 `password_hash` 不会漏出去”。
 - `raise HTTPException(...)`：规则性失败提前返回，状态码与人话说明一起给出；而校验失败（422）不用手抛——Pydantic 在进入函数前就拦下了。
@@ -196,11 +200,11 @@ def read_department(dept_id: int, db: dict = Depends(get_db)):
 > **最小例子**：`raise HTTPException(status_code=404, detail="部门不存在")`。
 > **什么时候用**：所有“规则性失败”——404、401、403、400；校验类失败（422）交给 Pydantic，不用手抛。
 
-## 5.6 Depends：把公共逻辑抽成参数
+### 5.1.6 Depends：把公共逻辑抽成参数
 
 先忘记框架，看一个普通的 Python 问题：很多函数都需要先拿到“数据库”，于是每个函数的第一行都在重复 `db = 拿数据库()`。更好的做法是把“拿数据库”抽成一个函数，需要的人声明一下就行。FastAPI 把这个想法做成了语法：
 
-**代码 5-6-1** · 依赖注入的最小对照（Python）
+**代码 5-1-7** · 依赖注入的最小对照（Python）
 
 ```python
 from fastapi import Depends
@@ -224,11 +228,11 @@ def list_departments(db=Depends(get_db)):    # 声明“我需要 get_db 的结�
 > **最小例子**：`def me(user = Depends(get_current_user)): return user`。
 > **什么时候用**：第 8 章起高频出现。看到 `xxx = Depends(yyy)`，就读作“xxx 由 yyy 提供”。
 
-## 5.7 Session、Base 与 get_db：数据库怎么接进来
+### 5.1.7 Session、Base 与 get_db：数据库怎么接进来
 
 实战代码（第 7 章起）里与数据库有关的三件套长这样：
 
-**代码 5-7-1** · `app/core/database.py`（骨架；完整版见第 7 章《项目初始化与版本控制》的「从 `@app.get` 到 `@router.get`」一节，Python）
+**代码 5-1-8** · `app/core/database.py`（骨架；完整版见第 7 章《项目初始化与版本控制》的「从 `@app.get` 到 `@router.get`」一节，Python）
 
 ```python
 from sqlalchemy import create_engine
@@ -264,11 +268,11 @@ SQL 一句话补课：`SELECT * FROM departments WHERE dept_code = 'D01'` 对应
 > **最小例子**：`page_size: Optional[int] = None`；`role: Literal["admin", "normal"]`。
 > **什么时候用**：第 8 章 8.1.6 起就会遇到（`Optional[dict]`），第 9 章账号管理、第 13 章统计校验会再用。**看不懂不影响往下做**——遇到时再回这张卡。
 
-## 5.8 先导与回链：后面章节怎么用这些机制
+### 5.1.8 先导与回链：后面章节怎么用这些机制
 
 本章讲的是“最小机制”。接下来几章会把它们用到真实场景，其中几个概念在这里只报到名字：
 
-**表 5-8-1 · 先导与回链一览**
+**表 5-1-1 · 先导与回链一览**
 
 | 概念 | 本章只说了一句什么 | 完整展开 | 之后在哪反复用 |
 | --- | --- | --- | --- |
@@ -281,11 +285,11 @@ SQL 一句话补课：`SELECT * FROM departments WHERE dept_code = 'D01'` 对应
 
 本书的规矩：**每一条“先导”都必须有回链落点**。你在后面任何一章遇到“似曾相识但没细讲”的符号，先回这张表；表里没有的，查附录 I《术语速查》。
 
-## 5.9 本章完整最小工程（可运行全文）
+### 5.1.9 本章完整最小工程（可运行全文）
 
-把 5.2–5.6 的机制拼成一个能跑的完整工程：只有三个文件、约 70 行。纸上读代码建议按 `schemas.py` → `deps.py` → `main.py` 的顺序，与下面三个文件的排印顺序一致。
+把 5.1.2–5.1.6 的机制拼成一个能跑的完整工程：只有三个文件、约 70 行。纸上读代码建议按 `schemas.py` → `deps.py` → `main.py` 的顺序，与下面三个文件的排印顺序一致。
 
-**代码 5-9-1** · `schemas.py`（全文，Python）
+**代码 5-1-9** · `schemas.py`（全文，Python）
 
 ```python
 from pydantic import BaseModel, Field
@@ -304,7 +308,7 @@ class DepartmentOut(BaseModel):
     dept_name: str
 ```
 
-**代码 5-9-2** · `deps.py`（全文，Python）
+**代码 5-1-10** · `deps.py`（全文，Python）
 
 ```python
 from fastapi import Depends, HTTPException
@@ -328,7 +332,7 @@ def get_department_or_404(dept_id: int, db: dict = Depends(get_db)) -> dict:
     return db[dept_id]
 ```
 
-**代码 5-9-3** · `main.py`（全文，Python）
+**代码 5-1-11** · `main.py`（全文，Python）
 
 ```python
 from fastapi import APIRouter, Depends, FastAPI, status
@@ -378,13 +382,13 @@ def health():
     return {"status": "ok"}
 ```
 
-**表 5-9-1 · 最小工程文件清单**
+**表 5-1-2 · 最小工程文件清单**
 
 | 文件 | 约行数 | 承担的机制 |
 | --- | ---: | --- |
-| `schemas.py` | 16 | 5.4 Pydantic 输入/输出模型 |
-| `deps.py` | 22 | 5.5 HTTPException 与 5.6 Depends（含依赖叠依赖） |
-| `main.py` | 42 | 5.2 路由、5.3 APIRouter 与 include_router |
+| `schemas.py` | 16 | 5.1.4 Pydantic 输入/输出模型 |
+| `deps.py` | 22 | 5.1.5 HTTPException 与 5.1.6 Depends（含依赖叠依赖） |
+| `main.py` | 42 | 5.1.2 路由、5.1.3 APIRouter 与 include_router |
 
 **启动与自查**（在自己机器上）：
 
@@ -402,46 +406,177 @@ $ uvicorn main:app --port 8000
 
 读这套代码时对照三个问题：`router` 从哪来（`main.py` 顶部）；数据结构在哪约束（`schemas.py`）；公共逻辑在哪复用（`deps.py`）。这三个答案，就是第 7–15 章所有后端代码的地图。
 
-## 课前自检（课次 4 唯一自测组，5 题）
+## 5.2 示范例题
 
-> 这 5 题同时覆盖第 4 章与本章，也就是课次 4 的课后自测。**先合上书做，再翻到本章末「自检答案页」对照**。
+#### 例 5-1：读一段装饰器路由代码【Bloom：理解】
 
-#### 自检 5-1【HTTP 方法语义】
+**题目**：下面的接口把 GET 请求绑定到一个函数。请指出方法、URL、参数位置与返回内容，并说明访问 `/departments/abc` 会发生什么、校验发生在哪一层。
 
-**题目**：接口 `POST /api/v1/departments/delete/1` 想删除 1 号部门。指出两处设计问题，并写出符合 RESTful 风格的写法。
+```python
+@app.get("/departments/{dept_id}")
+def read_department(dept_id: int):
+    return {"id": dept_id}
+```
 
-#### 自检 5-2【状态码】
+**解**：
 
-**题目**：分别写出下列三种情况应返回的状态码，并各用一句话说明理由：① 未登录调用受保护接口；② 普通用户调用管理员接口；③ 新增部门时 `dept_code` 只填了 1 个字符。
+1. 方法是 `GET`；URL 是 `/departments/{dept_id}`，表示查询单个部门。
+2. `{dept_id}` 在路径里，是路径参数；`dept_id: int` 的类型注解要求它必须是整数。
+3. 函数返回字典 `{"id": dept_id}`，FastAPI 自动转成 JSON；访问 `/departments/3` 得到 `{"id": 3}`，状态码 200。
+4. 访问 `/departments/abc` 时，`abc` 无法解析为整数，返回 422，响应体 `detail` 中的 `type` 为 `int_parsing`。
+5. 校验发生在进入函数体之前：FastAPI 读取类型注解，先做转换与校验，失败就直接返回 422，`read_department` 不会执行。
 
-#### 自检 5-3【路由链路】
+#### 例 5-2：把路由拆到 APIRouter 并挂载【Bloom：应用】
 
-**题目**：在 `app/routers/devices.py` 里写下 `@router.get("/{device_id}")` 之前，必须先写哪一行创建 `router`？`main.py` 里还要写哪一行把它挂进应用？
+**题目**：为器材模块创建路由文件，提供 `GET /api/v1/devices`，返回空列表与总数 0；写出路由文件与 `main.py` 的挂载代码，并说明访问路径是怎么拼出来的。
 
-#### 自检 5-4【Pydantic 校验】
+**解**：
 
-**题目**：`password: str = Field(..., min_length=6)` 中，`...` 与 `min_length=6` 各表示什么？用户提交 3 个字符的密码时，接口返回什么状态码？错误信息能定位到字段吗？
+**代码 5-2-1** · `app/routers/devices.py`（路由模块，Python）
 
-#### 自检 5-5【依赖注入】
+```python
+from fastapi import APIRouter
 
-**题目**：`db: Session = Depends(get_db)` 这行读作什么？把“拿数据库会话”写成依赖、而不是在每个函数里自己创建，列出两条好处。
+router = APIRouter(prefix="/devices", tags=["器材"])
+
+@router.get("")
+def list_devices():
+    return {"items": [], "total": 0}
+```
+
+**代码 5-2-2** · `main.py`（挂载，Python）
+
+```python
+from fastapi import FastAPI
+
+from app.routers import devices
+
+app = FastAPI()
+
+app.include_router(devices.router, prefix="/api/v1")
+```
+
+1. `router` 由模块顶部的 `APIRouter(prefix="/devices")` 创建，`@router.get("")` 把列表接口登记到它上面。
+2. `main.py` 的 `include_router(..., prefix="/api/v1")` 把模块路由挂进应用，两段前缀相加，最终路径是 `/api/v1/devices`。
+3. `tags=["器材"]` 不影响 URL，只决定 `/docs` 里的分组名。
+4. 启动后访问 `/docs`，能看到“器材”分组下的这个接口；调用 `GET /api/v1/devices` 返回 200 与 `{"items": [], "total": 0}`。
+
+#### 例 5-3：用 Pydantic 模型接住请求体【Bloom：应用】
+
+**题目**：为“新增器材”接口定义输入模型：`device_code` 必填、2–20 个字符；`device_name` 必填、2–50 个字符。写出模型与接口，并说明提交 `{"device_code": "E", "device_name": "投影仪"}` 时会发生什么。
+
+**解**：
+
+**代码 5-2-3** · `schemas.py`（输入模型，Python）
+
+```python
+from pydantic import BaseModel, Field
+
+
+class DeviceCreate(BaseModel):
+    device_code: str = Field(..., min_length=2, max_length=20)
+    device_name: str = Field(..., min_length=2, max_length=50)
+```
+
+**代码 5-2-4** · `app/routers/devices.py`（新增接口，Python）
+
+```python
+@router.post("", status_code=201)
+def create_device(data: DeviceCreate):
+    return data
+```
+
+1. `DeviceCreate` 继承 `BaseModel`，两个字段的 `...` 表示必填，`min_length`、`max_length` 给出长度约束。
+2. 接口参数写成 `data: DeviceCreate`，FastAPI 就知道“从请求体读 JSON，并按模型校验”。
+3. 提交 `{"device_code": "E", "device_name": "投影仪"}` 时，`device_code` 只有 1 个字符，违反 `min_length=2`，返回 422。
+4. `detail` 中 `loc` 指向 `["body", "device_code"]`，`type` 为 `string_too_short`，能定位到具体字段；校验在进入函数前完成，函数体不执行。
+5. 合法请求返回 201；若用 `response_model` 声明输出模型，返回时还会按输出模型过滤字段——输入与输出必须分开定义。
+
+## 5.3 引导练习
+
+#### 例 5-4（引导练习）：给列表接口加分页参数【Bloom：应用】
+
+**题目**：把 5.1.3 的 `list_departments` 改成接受 `page` 与 `page_size` 两个查询参数，默认值分别为 1 与 10，返回 `{"page": ..., "page_size": ...}`。说明访问 `/departments?page=2&page_size=5` 与 `/departments?page=abc` 分别得到什么结果。
+
+#### 例 5-5（引导练习）：用 Depends 抽出 404 逻辑【Bloom：应用】
+
+**题目**：把“按 id 取部门、取不到就抛 404”抽成一个依赖 `get_department_or_404`，并写出查询单个部门的路由如何声明这个依赖。说明这样写比在每个函数里重复判断好在哪。
+
+## 5.4 独立习题
+
+> 独立习题的参考答案统一放在书末第 98 章，做题时先不看。
+
+#### 习题 5-1【Bloom：记忆】
+
+**题目**：写出 FastAPI 的“四件核心机制”，并各写出一个对应的符号或写法：路由、数据、错误、复用。
+
+#### 习题 5-2【Bloom：分析】
+
+**题目**：同一条路径 `/square/{n}`，下面两个版本（分别部署）访问 `/square/abc` 时结果不同。请指出各自的状态码与原因，并说明类型注解在 FastAPI 里起什么作用。
+
+```python
+# 版本 A
+@app.get("/square/{n}")
+def square(n: int):
+    return {"n": n, "square": n * n}
+
+# 版本 B
+@app.get("/square/{n}")
+def square(n: str):
+    return {"n": n, "square": n * n}
+```
+
+#### 习题 5-3【Bloom：应用】
+
+**题目**：新建 `app/routers/borrows.py`，创建一个前缀为 `/borrows`、标签为“借还”的 `router`，提供 `GET ""` 列表接口，返回 `{"items": [], "total": 0}`；并在 `main.py` 中把它挂载到 `/api/v1`。写出两个文件的关键代码，并说明最终访问路径。
+
+#### 习题 5-4【Bloom：应用】
+
+**题目**：为“新增值班记录”定义输入模型 `DutyCreate`：`personnel_certificate_number` 必填、6–18 个字符；`start_time` 必填、类型为 `datetime`。写出模型与 `POST` 接口（成功返回 201），并说明提交空请求体、或证件号只有 3 个字符时，分别返回什么状态码、`detail` 能否定位到字段。
+
+#### 习题 5-5【Bloom：分析】（综合：接口语义与机制）
+
+**题目**：某同学的项目有三个问题：① 所有路由都写在 `main.py` 里；② 删除接口写成 `@app.post("/departments/delete/{dept_id}")`；③ 每个接口函数的第一行都是 `db = SessionLocal()`。请分别指出三处问题违背了第 4 章或本章的哪条规则，并用 `APIRouter`、`Depends` 与 RESTful 写法给出改造后的关键代码。
+
+## ◇ 课堂活动块（课次 4 · 理论讲授）
+
+**听讲要点**（课上跟着讲师过一遍，课后自查能否复述）：
+
+1. FastAPI 的四件核心机制：路由（装饰器 + `APIRouter`）、数据（Pydantic 模型）、错误（`HTTPException`）、复用（`Depends`）。
+2. 装饰器把“URL + 方法”登记到应用或路由上；类型注解让 FastAPI 在进入函数前完成转换与校验。
+3. `APIRouter` 的“创建—挂载”链路：模块顶部 `APIRouter(...)`，`main.py` 用 `include_router` 组装。
+4. 输入模型与输出模型必须分开；422 来自 Pydantic，404/401/403 等规则性失败来自 `HTTPException`。
+5. `Depends` 把公共逻辑抽成参数；`get_db` 负责会话的开关。
+
+**讨论·演示**：
+
+1. （讨论）为什么输入模型与输出模型要分开定义？如果直接把数据库表模型当输出，`password_hash` 会怎样漏出去？
+2. （演示）讲师启动 5.1.9 的最小工程，打开 `/docs`，依次调用查询、新增、删除接口，观察 200、201、204、404 与 422 各自的响应。
+
+**课后自测**：完成独立习题 5-1～5-5（答案见书末《98-参考答案》）。其中 5-5 同时覆盖第 4 章的接口语义与本章机制，作为课次 4 的书面检查。
+
+**回链**：本章 5.1.8 的回链表给出 JWT、ORM、TestClient 等概念的去向；第 7 章起，这些机制会在项目骨架与业务模块中逐个落地。
 
 ## 本章小结
 
-- FastAPI 的核心机制一共四件：**路由**（装饰器 + `APIRouter`）、**数据**（Pydantic 模型）、**错误**（`HTTPException`）、**复用**（`Depends`）。
-- 本章不设独立习题——课次 4 的书面检查就是课前自检 5 题，与第 4 章共用，不计入书末总题数。
-- 5.9 的最小工程三个文件是第 7–15 章代码的地图：`router` 从哪来、结构在哪约束、公共逻辑在哪复用。
+**核心结论**：
 
-## 自检答案页
+1. FastAPI 的核心机制一共四件：**路由**（装饰器 + `APIRouter`）、**数据**（Pydantic 模型）、**错误**（`HTTPException`）、**复用**（`Depends`）。
+2. 装饰器把“URL + 方法”与函数绑定；类型注解让框架在进入函数前完成转换与校验，校验失败返回 422。
+3. `APIRouter` 把路由按模块拆分，`include_router` 把它们组装回应用；`router` 由模块顶部的 `APIRouter(...)` 创建。
+4. Pydantic 用 `BaseModel` 与 `Field` 定义带约束的输入模型；输入与输出必须分开，输出模型负责过滤多余字段。
+5. `Depends` 把公共逻辑抽成参数；`get_db` 用 `yield` 负责会话的开关，接口只声明、不重复。
+6. 5.1.9 的最小工程三个文件是第 7–15 章代码的地图：`router` 从哪来、结构在哪约束、公共逻辑在哪复用。
 
-**自检 5-1**：问题一，删除动作用 POST 承载，语义错位；问题二，URL 里出现动词 `delete`。改法：`DELETE /api/v1/departments/1`，成功返回 204。（考查：第 4 章 4.1.5）
+**学完本章，你可以体会到**：这些机制不是“框架的花样”，而是把重复的登记、校验、开关会话从业务代码里拿走。认得出它们，后面几十个接口的代码就不再是黑箱。
 
-**自检 5-2**：① 401——身份未确认（没有有效令牌）；② 403——身份已确认但权限不足；③ 422——请求体不满足 Pydantic 约束，在进入函数前被拦下。（考查：第 4 章 4.1.6、本章 5.4）
+**自检**：回到章首的学习目标，逐条问自己做到了没有——
 
-**自检 5-3**：先写 `router = APIRouter(prefix="/devices", tags=["器材"])`（模块顶部创建）；再在 `main.py` 写 `app.include_router(devices.router, prefix="/api/v1")`（挂载）。（考查：本章 5.3）
+- [ ] 用一句话说明 FastAPI 是什么、为什么选它 → 回看 5.1.1，自测：习题 5-1
+- [ ] 解释装饰器路由与类型注解 → 回看 5.1.2、例 5-1，自测：习题 5-2
+- [ ] 说出 `APIRouter` 与 `include_router` 的分工，指出 `router` 从哪来 → 回看 5.1.3、例 5-2，自测：习题 5-3
+- [ ] 用 `BaseModel` 与 `Field` 定义输入模型，解释 422 产生在哪一层 → 回看 5.1.4、例 5-3，自测：习题 5-4
+- [ ] 说明 `Depends` 与 `get_db` 的写法 → 回看 5.1.6、例 5-5，自测：习题 5-5
+- [ ] 对照回链表说出 JWT、ORM 等概念的去向 → 回看 5.1.8，自测：习题 5-1
 
-**自检 5-4**：`...` 表示该字段必填；`min_length=6` 是最小长度约束；返回 422，`detail` 中的 `loc` 指明字段、`type` 为 `string_too_short`，能定位到字段。（考查：本章 5.4；第 8 章 8.1.4 会再见到它）
-
-**自检 5-5**：读作“`db` 由 `get_db()` 的返回值提供，调用接口前先执行依赖”。好处任答两条：公共逻辑只写一次、改一处全体生效；依赖可以叠加；测试时可替换为假实现。（考查：本章 5.6）
-
-**判分说明（评价维度）**：每题 1 分。5 分为优秀，4 分为通过；3 分及以下，按每题括号里的“考查”位置回看，然后重做第 4 章习题 4-2 与本章错题。课内的 10–15 分钟检查答疑，主要面向 3 分及以下的同学。
+**下一章预告**：机制认全了，下一步是设计与建模——把需求变成表结构、模块划分与接口清单，再进入第 7 章的项目初始化。

@@ -248,7 +248,7 @@ def check_consistency(book, args):
         ('前言·对照总表', ft, '章 ↔ 课次'),
         ('前言·第4章新名', ft, 'HTTP 与接口设计'),
         ('前言·第5章新名', ft, 'FastAPI 核心机制'),
-        ('教材设计·三套子体例', dt, 'T/P/R'),
+        ('教材设计·T/P 两套子体例', dt, 'T/P 两套子体例'),
         ('裁决记录', read(ledger) if ledger.exists() else '', 'C12'),
     ):
         if needle not in text:
