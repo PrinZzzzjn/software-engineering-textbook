@@ -26,9 +26,11 @@ from common import DEFAULT_BOOK, chapters, read, student_files
 
 BANNED_5 = ('◇ 选读', '补课卡', '跳过不影响后续', '不要求一次学完')
 K_CARD_RE = re.compile(r'K-0\d')
-BACKREF_RE = re.compile(r'(?:第\s*5\s*章|本章)\s*5\.1\.(\d+)')
-OLD_SECTION_RE = re.compile(r'第\s*5\s*章\s*5\.[4-9]')
-SECTION_RE = re.compile(r'^### 5\.1\.(\d+)', re.M)
+# 2026-11-12 C19：节号由三位 N.1.k 收敛为两位 N.k；以下三条同步适配，
+# 并改为检测「旧三位节号 5.1.k 残留」，防止体例脚本重跑注回旧结构。
+BACKREF_RE = re.compile(r'(?:第\s*5\s*章|本章)\s*5\.(\d+)')
+OLD_SECTION_RE = re.compile(r'5\.1\.\d+')
+SECTION_RE = re.compile(r'^## 5\.(\d+)', re.M)
 EX_HEAD_RE = re.compile(r'^#### 习题 (\d+-\d+)', re.M)
 FLAT_FILE_RE = re.compile(r'\*\*代码 [^*]*\*\*\s*·\s*`(schemas|deps)\.py`')
 
@@ -57,7 +59,7 @@ def check1_no_optional(book, sample_only=False):
 
 
 def check2_no_dangling(book, sample_only=False):
-    """全书无补课卡 / K-0x；第 5 章回链节号与实际 ### 号一致。
+    """全书无补课卡 / K-0x；第 5 章回链节号与实际 ## 号一致。
 
     --stage sample 时只扫第 5 章与 98（样板阶段可独立达成），
     全量时扫全书（04/07/08/09/10/12/15/00-* 的引用留到铺开阶段 P3/P4）。
@@ -74,19 +76,19 @@ def check2_no_dangling(book, sample_only=False):
             issues.append(f'{p.name}: 补课卡 / K-0x 残留 {n} 处')
         m = OLD_SECTION_RE.findall(t)
         if m:
-            issues.append(f'{p.name}: 1.x 节号残留 {len(m)} 处')
+            issues.append(f'{p.name}: C19 旧三位节号残留 {len(m)} 处')
     secs = {int(x) for x in SECTION_RE.findall(read(ch5))} if ch5 else set()
     ceiling = max(secs) if secs else 0
     for p in targets:
         for num in BACKREF_RE.findall(read(p)):
             if int(num) > ceiling:
-                issues.append(f'{p.name}: 回链 5.1.{num} 超出实际节号 (最大 5.1.{ceiling})')
+                issues.append(f'{p.name}: 回链 5.{num} 超出实际节号 (最大 5.{ceiling})')
     scope = '第 5 章 + 98' if sample_only else '全书'
     return not issues, issues or [f'{scope}无补课卡 / K-0x / 过期回链；第 5 章实际 {ceiling} 节']
 
 
 def check3_zero_rework(book, sample_only=False):
-    """第 5 章最小工程目录 ⊆ 7.1.1 目录树；三处锚点两章逐字一致。
+    """第 5 章最小工程目录 ⊆ 7.1 目录树；三处锚点两章逐字一致。
 
     样板阶段只判第 5 章侧；「第 7 章从本章起统一使用」等跨章项属铺开阶段 P3。
     """
@@ -104,12 +106,12 @@ def check3_zero_rework(book, sample_only=False):
         if not sample_only and token not in t7 and label != '应用 title':
             issues.append(f'[铺开] 第 7 章缺锚点 {label}: {token}')
     if 'title="duty 最小工程"' in t5:
-        issues.append('第 5 章 title 仍为「duty 最小工程」，与 7.1.5 不一致')
+        issues.append('第 5 章 title 仍为「duty 最小工程」，与 7.5 不一致')
     if not sample_only and '从本章起统一使用' in t7:
         issues.append('[铺开] 第 7 章仍有「从本章起统一使用」另起炉灶表述')
     for path in ('app/routers/departments.py', 'app/schemas/', 'app/core/database.py'):
         if path not in t5:
-            issues.append(f'第 5 章最小工程缺 7.1.1 目录: {path}')
+            issues.append(f'第 5 章最小工程缺 7.1 目录: {path}')
         if not sample_only and path not in t7 and path != 'app/schemas/':
             issues.append(f'[铺开] 第 7 章缺目录: {path}')
     scope = '第 5 章侧' if sample_only else '两章'

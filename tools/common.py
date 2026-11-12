@@ -141,6 +141,10 @@ def _code_caption_ok(t):
 
 def _structure_one(p):
     t = read(p)
+    # C19：章内带序号的二级标题只能是讲解小节，且须为 N.1、N.2… 连续编号。
+    # 既防旧三位节号回归，也防第 15 章「质量评价」这类非讲解块与讲解小节撞号。
+    n = int(p.name[:2])
+    secs = [f'{a}.{b}' for a, b in re.findall(r'^## (\d+)\.(\d+) ', t, re.M)]
     need = {
         '节首信息条': '对应课次' in t,
         '学习目标': bool(re.search(r'^## 本章学习目标', t, re.M)),
@@ -154,6 +158,16 @@ def _structure_one(p):
         # 2026-11-10 C13：四段式改三段，引导练习段全部取消；判据防体例脚本重跑回归。
         '无引导练习段': not re.search(r'^## .*引导练习', t, re.M),
         '有独立习题段': bool(re.search(r'^## .*独立习题', t, re.M)),
+        # 2026-11-12 C19：概念讲解外壳取消；讲解小节提为带序号二级标题（N.k），
+        # 示范例题 / 独立习题改为无编号二级标题，与「本章小结」同级。
+        # 一章内只有讲解小节带序号；防体例脚本重跑把旧结构注回来。
+        '无概念讲解段': not re.search(r'^## .*概念讲解', t, re.M),
+        '有编号讲解小节': bool(secs),
+        '讲解小节编号连续': secs == [f'{n}.{i}' for i in range(1, len(secs) + 1)],
+        '示范例题无编号': bool(re.search(r'^## 示范例题[ \t]*\r?$', t, re.M)),
+        '独立习题无编号': bool(re.search(r'^## 独立习题[ \t]*\r?$', t, re.M)),
+        '无三位节号标题': not re.search(r'^### \d+\.\d+\.\d+ ', t, re.M),
+        '无带号段标题': not re.search(r'^## \d+\.[23] (示范例题|独立习题)[ \t]*\r?$', t, re.M),
     }
     return need
 
@@ -337,16 +351,27 @@ def check_numbering(book, args):
     nums = sorted(int(p.name[:2]) for p in chaps)
     continuous = nums == list(range(1, 27))
     bad_prefix = []
+    head_re = re.compile(r'^#### 习题 (\d+-\d+)(.*)$', re.M)
+    book_heads = {}
     for p in chaps:
         n = int(p.name[:2])
-        for m in re.finditer(r'^#### 习题 (\d+)-(\d+)', read(p), re.M):
-            if int(m.group(1)) != n:
-                bad_prefix.append(f'{p.name}: 习题 {m.group(1)}-{m.group(2)}')
+        for m in head_re.finditer(read(p)):
+            if int(m.group(1).split('-')[0]) != n:
+                bad_prefix.append(f'{p.name}: 习题 {m.group(1)}')
+            book_heads[m.group(1)] = m.group(0).strip()
     ans = book / '98-参考答案.md'
-    answer_heads = set(re.findall(r'^#### 习题 (\d+-\d+)', read(ans), re.M)) if ans.exists() else set()
-    book_heads = set()
-    for p in chaps:
-        book_heads |= set(re.findall(r'^#### 习题 (\d+-\d+)', read(p), re.M))
+    answer_heads = {}
+    if ans.exists():
+        for m in head_re.finditer(read(ans)):
+            answer_heads[m.group(1)] = m.group(0).strip()
+    only_book = sorted(set(book_heads) - set(answer_heads))
+    only_ans = sorted(set(answer_heads) - set(book_heads))
+    head_diff = [
+        f'{k}: 章内「{book_heads[k]}」/ 98「{answer_heads[k]}」'
+        for k in sorted(set(book_heads) & set(answer_heads))
+        if book_heads[k] != answer_heads[k]
+    ]
+    missing = [f'98 缺答案 {k}' for k in only_book] + [f'章内缺题目 {k}' for k in only_ans]
     # 2.0 结构特征
     structural = {
         '第5章新文件': (book / '05-FastAPI核心机制.md').exists(),
@@ -355,13 +380,15 @@ def check_numbering(book, args):
         '旧14/15已删': not (book / '14-后端开发综合实践一.md').exists() and not (book / '15-后端开发综合实践二.md').exists(),
     }
     struct_bad = [k for k, v in structural.items() if not v]
-    return _res(continuous and not bad_prefix and answer_heads == book_heads and not struct_bad, {
+    issues = bad_prefix + missing + head_diff + [f'方案A未实施: {s}' for s in struct_bad]
+    return _res(continuous and not issues, {
         '章号连续1-26': continuous,
         '章内习题数': len(book_heads),
         '98答案题数': len(answer_heads),
         '题号前缀错位': len(bad_prefix),
+        '题头全文不一致': len(head_diff),
         '方案A结构特征': 'OK' if not struct_bad else ','.join(struct_bad),
-    }, bad_prefix + [f'方案A未实施: {s}' for s in struct_bad])
+    }, issues)
 
 
 def check_paper(book, args):
