@@ -4,7 +4,7 @@
 约定：
 - 默认扫描 `软件工程实践-2.0/`（工作副本），可用 --path 切换。
 - --scope book 只扫教材内容包；--scope all 额外扫描 docs/ 与 教学设计/ 的已知断链（仅登记）。
-- 学生稿 = 26 章 + 98-参考答案.md；`00-教材设计.md` 为作者向白名单，其 M0x 素材索引合法。
+- 学生稿 = 24 章 + 98-参考答案.md；`00-教材设计.md` 为作者向白名单，其 M0x 素材索引合法。
 """
 import argparse
 import collections
@@ -20,7 +20,7 @@ MAIN_BOOK = ROOT / '软件工程实践'
 SNAPSHOT = ROOT / 'docs' / '_基线快照_1.x'
 REPORT = ROOT / 'docs' / '修订校验报告_2.0.md'
 
-CHAPTER_RE = re.compile(r'^(0[1-9]|1\d|2[0-6])-.*\.md$')
+CHAPTER_RE = re.compile(r'^(0[1-9]|1\d|2[0-4])-.*\.md$')
 META_RE = re.compile(r'已验证|核验记录|M0[1-9]|实际输出|运行命令|⚠️|✅')
 # 合法代码图标（第 20 章 st.toast(message, icon="✅")），不是编写过程元数据
 CODE_ICON_RE = re.compile(r'icon="✅"')
@@ -174,9 +174,6 @@ def _structure_one(p):
 
 def check_structure(book, args):
     files = chapters(book)
-    if args.unit == 'lesson4':
-        # 课次单元联合校验：只收敛到第 4/5 章单元，不要求其余章已铺开体例
-        files = [p for p in files if p.name.startswith('04-') or p.name.startswith('05-FastAPI')]
     if args.file:
         files = [p for p in files if p.name == args.file]
     per, missing = {}, []
@@ -190,26 +187,13 @@ def check_structure(book, args):
     info = sum(1 for v in per.values() if v['节首信息条'])
     code = sum(1 for v in per.values() if v['代码编号'])
 
-    # 第 4/5 章同课次单元（R12 四处补偿）
-    unit_issues = []
-    if args.unit == 'lesson4' or (not args.file and any('05-FastAPI' in p.name for p in files)):
-        foreword = book / '00-前言.md'
-        ft = read(foreword) if foreword.exists() else ''
-        unit_issues += [] if '课次 4 · 后端开发框架基础' in ft else ['前言缺课次 4 目录分组行']
-        unit_issues += [] if '章 ↔ 课次' in ft or '章↔课次' in ft else ['前言缺章↔课次对照总表']
-        for num, mark in (('04', '本单元第 1/2 章'), ('05', '本单元第 2/2 章')):
-            # 05 用精确前缀，避免与尚未重排的旧 05-软件设计与建模.md 混淆
-            prefix = '05-FastAPI' if num == '05' else '04-'
-            hit = [p for p in chapters(book) if p.name.startswith(prefix)]
-            if not hit or mark not in read(hit[0]):
-                unit_issues.append(f'第 {num} 章节首信息条缺「{mark}」')
-
-    return _res(ok_chapters == len(files) and not unit_issues, {
+    # C21（2026-11-12）：第 4、5 章并入新第 3 章，「课次 4 单元」四处补偿全部作废，
+    # 本检查不再要求两章节首「本单元第 1/2 章」，也不再检查前言分组行。
+    return _res(ok_chapters == len(files), {
         '合规章数': f'{ok_chapters}/{len(files)}',
         '节首信息条': f'{info}/{len(files)}',
         '代码编号': f'{code}/{len(files)}',
-        '课次4单元补偿': 'OK' if not unit_issues else f'{len(unit_issues)} 处缺失',
-    }, missing + unit_issues)
+    }, missing)
 
 
 def _goal_text(t):
@@ -261,10 +245,10 @@ def check_consistency(book, args):
         conflicts.append('素材索引 M01 行仍标注「结构基准」')
     for label, text, needle in (
         ('前言·模拟数据声明', ft, '教学模拟数据'),
-        ('前言·课次4分组行', ft, '课次 4 · 后端开发框架基础'),
+        ('前言·课次3–4分组行', ft, '课次 3–4 · 后端开发框架'),
         ('前言·对照总表', ft, '章 ↔ 课次'),
-        ('前言·第4章新名', ft, 'HTTP 与接口设计'),
-        ('前言·第5章新名', ft, 'FastAPI 核心机制'),
+        ('前言·第3章新名', ft, '后端开发框架'),
+        ('前言·第4章新名', ft, '软件设计与建模'),
         ('教材设计·T/P 两套子体例', dt, 'T/P 两套子体例'),
         ('裁决记录', read(ledger) if ledger.exists() else '', 'C12'),
     ):
@@ -301,7 +285,7 @@ def check_code(book, args):
         return bool(re.search(r'(def|class|=)\s*' + re.escape(sym), t))
 
     defined_global = {sym: any(defined_in(t, sym) for t in texts.values()) for sym in targets}
-    concept_chapter = next((t for n, t in texts.items() if 'FastAPI核心机制' in n), '')
+    concept_chapter = next((t for n, t in texts.items() if '后端开发框架' in n), '')
     for sym in targets:
         if sym in concept_chapter:
             defined_global[sym] = True
@@ -314,9 +298,9 @@ def check_code(book, args):
             linked = bool(re.search(r'(见第\s*\d+\s*章|完整工程见|代码文件清单|回链)', t))
             if not defined_in(t, sym) and not linked and not defined_global[sym]:
                 issues.append(f'{name}: {sym} 既无定义也无回链')
-    mini = book / '05-FastAPI核心机制.md'
+    mini = book / '03-后端开发框架.md'
     if not mini.exists():
-        issues.append('第 5 章最小工程章不存在')
+        issues.append('第 3 章最小工程章不存在')
     return _res(not issues, {'悬空符号': len(issues), '最小工程章': mini.exists()}, issues)
 
 
@@ -349,7 +333,7 @@ def check_links(book, args):
 def check_numbering(book, args):
     chaps = chapters(book)
     nums = sorted(int(p.name[:2]) for p in chaps)
-    continuous = nums == list(range(1, 27))
+    continuous = nums == list(range(1, 25))
     bad_prefix = []
     head_re = re.compile(r'^#### 习题 (\d+-\d+)(.*)$', re.M)
     book_heads = {}
@@ -372,22 +356,23 @@ def check_numbering(book, args):
         if book_heads[k] != answer_heads[k]
     ]
     missing = [f'98 缺答案 {k}' for k in only_book] + [f'章内缺题目 {k}' for k in only_ans]
-    # 2.0 结构特征
+    # v3.0 结构特征（C21）：原 03 删除、原 04/05 并入新 03、原 06–26 → 新 04–24
     structural = {
-        '第5章新文件': (book / '05-FastAPI核心机制.md').exists(),
-        '第4章改名': (book / '04-HTTP与接口设计.md').exists(),
-        '合并章': (book / '15-后端开发综合实践.md').exists(),
-        '旧14/15已删': not (book / '14-后端开发综合实践一.md').exists() and not (book / '15-后端开发综合实践二.md').exists(),
+        '合并章': (book / '03-后端开发框架.md').exists(),
+        '第4章新名': (book / '04-软件设计与建模.md').exists(),
+        '末章': (book / '24-软件部署综合实践.md').exists(),
+        '旧03/04/05已删': not any((book / n).exists() for n in (
+            '03-需求文档编写.md', '04-HTTP与接口设计.md', '05-FastAPI核心机制.md')),
     }
     struct_bad = [k for k, v in structural.items() if not v]
-    issues = bad_prefix + missing + head_diff + [f'方案A未实施: {s}' for s in struct_bad]
+    issues = bad_prefix + missing + head_diff + [f'v3.0结构未实施: {s}' for s in struct_bad]
     return _res(continuous and not issues, {
-        '章号连续1-26': continuous,
+        '章号连续1-24': continuous,
         '章内习题数': len(book_heads),
         '98答案题数': len(answer_heads),
         '题号前缀错位': len(bad_prefix),
         '题头全文不一致': len(head_diff),
-        '方案A结构特征': 'OK' if not struct_bad else ','.join(struct_bad),
+        'v3.0结构特征': 'OK' if not struct_bad else ','.join(struct_bad),
     }, issues)
 
 
@@ -421,16 +406,16 @@ def check_bloom(book, args):
             theory_concept += 1
         per_chapter[p.name[:2]] = len(re.findall(r'^#### 习题 \d+-\d+', t, re.M))
     too_few = [n for n, c in per_chapter.items() if c < 2]
-    # C13（2026-11-10）：三段式 + 删【应用】题后，章内 70 道 + 98 答案 70 道 = 140。
-    # 阈值按「26 章 × 每章至少 2 道 × 章内/98 两份」= 104 设定，替代旧的 total >= 180。
+    # C13（2026-11-10）：三段式 + 删【应用】题后，章内与 98 各印一份。
+    # C21（2026-11-12）：26 章 → 24 章，阈值按「24 章 × 每章至少 2 道 × 两份」= 96 设定。
     errs = []
     if theory_concept < 6:
         errs.append(f'理论章概念题不足: {theory_concept}/6')
-    if total < 104:
-        errs.append(f'独立习题标注数不足: {total}/104')
+    if total < 96:
+        errs.append(f'独立习题标注数不足: {total}/96')
     if too_few:
         errs.append(f'每章少于 2 道独立习题: {",".join(too_few)}')
-    return _res(theory_concept >= 6 and total >= 104 and not too_few, {
+    return _res(theory_concept >= 6 and total >= 96 and not too_few, {
         '独立习题标注数': total,
         '记忆+理解': low,
         '记忆+理解占比': f'{ratio}%',

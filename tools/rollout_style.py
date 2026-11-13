@@ -19,8 +19,14 @@ DATA 中 tself / pself / checks 的历史题号已泛化为「本章独立习题
 「示范例题」「独立习题」去掉 N.2／N.3 编号，与「本章小结」同级；DATA 中 checks 的节号已同步
 由 N.1.k 改为 N.k。**本脚本仍为阶段 4 历史工具，禁止重跑。**
 
+2026-11-13 C21／C22 口径变更：第 3 章与课次 3 已裁撤，原 4、5 章并入新第 3 章
+《后端开发框架》，原 6–26 章整体 −2。本脚本 DATA 的章号、课次号与节号全部失效，
+**已停用**：直接运行或调用 `build()` 都会退出，避免把旧体例、旧章号与需求文档模板
+回灌到迁移后的教材包。确需考古时用 `ALLOW_HISTORICAL_ROLLOUT=1` 显式放行。
+
 只处理需要铺开的章；04/05/08/15 已是样板或已合并，跳过。
 """
+import os
 import pathlib
 import re
 
@@ -630,7 +636,15 @@ def render_hints(hints):
     """2026-11-10 口径变更：本章提示页取消，<details> 提示内容不再渲染。"""
     return ''
 
+def _ensure_historical():
+    if os.environ.get('ALLOW_HISTORICAL_ROLLOUT') != '1':
+        raise SystemExit(
+            'rollout_style.py 已停用（C21/C22）：原 4、5 章已并入新第 3 章，原 6–26 章整体 −2，'
+            '本脚本的章号、课次号与节号全部失效。确需考古请设 ALLOW_HISTORICAL_ROLLOUT=1。')
+
+
 def build(ch):
+    _ensure_historical()
     p = next(BOOK.glob(f'{ch}-*.md'))
     text = p.read_text(encoding='utf-8')
     d = DATA[ch]
@@ -711,6 +725,7 @@ def build(ch):
 
 if __name__ == '__main__':
     import sys
+    _ensure_historical()
     targets = sys.argv[1:] or list(DATA)
     for ch in targets:
         build(ch)
