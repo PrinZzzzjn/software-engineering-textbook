@@ -9,8 +9,8 @@
   A1 章号 1–24 连续，且 03 为新合并章；
   A2 章内题头与 98 答案题头全文逐字一致；
   A3 全书无「第 3 章 需求文档」类悬空引用，旧 03 章文件已删；
-  A4 合并章只用 3.1–3.6，无旧 4.k / 5.k 节号与旧章内自指；
-  A5 课次 3–4 的对照总表行与合并章节首信息条一致。
+  A4 03/04 边界正确：03 讲 3.1–3.6、只承载课次 3；04 讲 4.1–4.5、承载课次 4–5 并含综合实训 4-1；
+  A5 课次 3–5 的对照总表行与两章节首信息条一致。
 
 用法：
   python tools/check_migration.py            # 全部断言，任一 RED 退出码 1
@@ -104,28 +104,39 @@ def a3_no_reqdoc(book, chaps):
     }
 
 
-def a4_merged(chaps):
-    p = chaps.get(3)
-    if p is None or '后端开发框架' not in p.name:
-        return {'ok': False, 'metrics': {'合并章': '缺失'}, 'issues': ['合并章不存在']}
-    t = read(p)
-    secs = re.findall(r'^## (\d+)\.(\d+) ', t, re.M)
-    nums = [f'{a}.{b}' for a, b in secs]
-    need = [f'3.{i}' for i in range(1, 7)]
+def a4_boundary(chaps):
+    p3 = chaps.get(3)
+    p4 = chaps.get(4)
     issues = []
-    if nums != need:
-        issues.append(f'讲解小节应为 3.1–3.6，实际 {nums}')
-    old = re.findall(r'^## [45]\.\d+ ', t, re.M) + re.findall(r'本章\s*[45]\.\d', t)
+    if p3 is None or '后端开发框架' not in p3.name:
+        issues.append('第 3 章不是《后端开发框架》')
+    if p4 is None or '软件设计与建模' not in p4.name:
+        issues.append('第 4 章不是《软件设计与建模》')
+    t3 = read(p3) if p3 else ''
+    t4 = read(p4) if p4 else ''
+    nums3 = [f'{a}.{b}' for a, b in re.findall(r'^## (\d+)\.(\d+) ', t3, re.M)]
+    nums4 = [f'{a}.{b}' for a, b in re.findall(r'^## (\d+)\.(\d+) ', t4, re.M)]
+    if nums3 != [f'3.{i}' for i in range(1, 7)]:
+        issues.append(f'第 3 章讲解小节应为 3.1–3.6，实际 {nums3}')
+    if nums4 != [f'4.{i}' for i in range(1, 6)]:
+        issues.append(f'第 4 章讲解小节应为 4.1–4.5，实际 {nums4}')
+    if '对应课次 3' not in t3 or '课次 4' in t3:
+        issues.append('第 3 章节首信息条应只写课次 3')
+    if '课次 4' not in t4 or '课次 5' not in t4:
+        issues.append('第 4 章节首信息条应同时写课次 4 与课次 5')
+    if '◆ 实训 3-1' in t3 or '◆ 综合实训 4-1' in t3:
+        issues.append('第 3 章不应再含实训块')
+    if '◆ 综合实训 4-1' not in t4:
+        issues.append('第 4 章缺 ◆ 综合实训 4-1')
+    old = re.findall(r'^## [56]\.\d+ ', t4, re.M)
     if old:
-        issues.append('旧 4.k / 5.k 残留: ' + '；'.join(old[:5]))
-    if '对应课次 3' not in t or '课次 4' not in t:
-        issues.append('节首信息条未同时写明课次 3 与课次 4')
-    if '◆ 实训 3-1' not in t:
-        issues.append('缺 ◆ 实训 3-1')
+        issues.append('第 4 章残留旧 5.k / 6.k 节号: ' + '；'.join(old[:5]))
     return {
         'ok': not issues,
-        'metrics': {'讲解小节': '/'.join(nums), '旧节号残留': len(old),
-                    '课次3-4': '对应课次 3' in t and '课次 4' in t, '实训3-1': '◆ 实训 3-1' in t},
+        'metrics': {'03小节': '/'.join(nums3), '04小节': '/'.join(nums4),
+                    '03课次': '对应课次 3' in t3,
+                    '04课次': '课次 4' in t4 and '课次 5' in t4,
+                    '04实训': '◆ 综合实训 4-1' in t4},
         'issues': issues,
     }
 
@@ -133,24 +144,34 @@ def a4_merged(chaps):
 def a5_lesson_map(book, chaps):
     fore = book / '00-前言.md'
     ft = read(fore) if fore.exists() else ''
-    p = chaps.get(3)
-    ct = read(p) if p else ''
+    p3 = chaps.get(3)
+    p4 = chaps.get(4)
+    t3 = read(p3) if p3 else ''
+    t4 = read(p4) if p4 else ''
     issues = []
     row3 = next((l for l in ft.splitlines() if l.startswith('| 3 |')), '')
     row4 = next((l for l in ft.splitlines() if l.startswith('| 4 |')), '')
-    if '第 3 章' not in row3:
-        issues.append(f'对照总表课次 3 行未指向第 3 章: {row3[:80]}')
-    if '第 3 章' not in row4:
-        issues.append(f'对照总表课次 4 行未指向第 3 章: {row4[:80]}')
-    if '2 理论' not in row3:
-        issues.append('对照总表课次 3 不是 2 理论')
-    if '2 实践' not in row4:
-        issues.append('对照总表课次 4 不是 2 实践')
-    if '对应课次 3' not in ct or '课次 4' not in ct:
-        issues.append('合并章节首信息条未同时写课次 3 与课次 4')
+    row5 = next((l for l in ft.splitlines() if l.startswith('| 5 |')), '')
+    checks = [
+        (row3, '第 3 章', '2 理论', 'T', '课次 3'),
+        (row4, '第 4 章', '2 理论', 'T', '课次 4'),
+        (row5, '第 4 章', '2 实践', 'P', '课次 5'),
+    ]
+    for row, ch, hours, typ, label in checks:
+        if ch not in row:
+            issues.append(f'对照总表{label}行未指向{ch}: {row[:80]}')
+        if hours not in row:
+            issues.append(f'对照总表{label}行不是 {hours}')
+        if f'| {typ} |' not in row:
+            issues.append(f'对照总表{label}行类型不是 {typ}')
+    if '对应课次 3' not in t3 or '课次 4' in t3:
+        issues.append('第 3 章节首信息条应只写课次 3')
+    if '课次 4' not in t4 or '课次 5' not in t4:
+        issues.append('第 4 章节首信息条未同时写课次 4 与课次 5')
     return {
         'ok': not issues,
-        'metrics': {'课次3行': row3[:40] or '缺失', '课次4行': row4[:40] or '缺失'},
+        'metrics': {'课次3行': row3[:40] or '缺失', '课次4行': row4[:40] or '缺失',
+                    '课次5行': row5[:40] or '缺失'},
         'issues': issues,
     }
 
@@ -166,8 +187,8 @@ def main():
         ('A1 章号1-24连续', a1_numbering(chaps)),
         ('A2 题头全文一致', a2_heads(book, chaps)),
         ('A3 无需求文档章', a3_no_reqdoc(book, chaps)),
-        ('A4 合并章无旧节号', a4_merged(chaps)),
-        ('A5 课次3-4对照一致', a5_lesson_map(book, chaps)),
+        ('A4 03/04边界正确', a4_boundary(chaps)),
+        ('A5 课次3-5对照一致', a5_lesson_map(book, chaps)),
     ]
     red = [n for n, r in results if not r['ok']]
     if args.json:
