@@ -9,7 +9,7 @@
   A1 章号 1–24 连续，且 03 为新合并章；
   A2 章内题头与 98 答案题头全文逐字一致；
   A3 全书无「第 3 章 需求文档」类悬空引用，旧 03 章文件已删；
-  A4 03/04 边界正确：03 讲 3.1–3.6、只承载课次 3；04 讲 4.1–4.5、承载课次 4–5 并含综合实训 4-1；
+  A4 03/04 边界正确：03 讲 3.1–3.6、承载课次 3（含 ◆ 实训 3-1）；04 讲 4.1–4.6、承载课次 4–5 并含综合实训 4-1；
   A5 课次 3–5 的对照总表行与两章节首信息条一致。
 
 用法：
@@ -118,14 +118,14 @@ def a4_boundary(chaps):
     nums4 = [f'{a}.{b}' for a, b in re.findall(r'^## (\d+)\.(\d+) ', t4, re.M)]
     if nums3 != [f'3.{i}' for i in range(1, 7)]:
         issues.append(f'第 3 章讲解小节应为 3.1–3.6，实际 {nums3}')
-    if nums4 != [f'4.{i}' for i in range(1, 6)]:
-        issues.append(f'第 4 章讲解小节应为 4.1–4.5，实际 {nums4}')
+    if nums4 != [f'4.{i}' for i in range(1, 7)]:
+        issues.append(f'第 4 章讲解小节应为 4.1–4.6，实际 {nums4}')
     if '对应课次 3' not in t3 or '课次 4' in t3:
         issues.append('第 3 章节首信息条应只写课次 3')
     if '课次 4' not in t4 or '课次 5' not in t4:
         issues.append('第 4 章节首信息条应同时写课次 4 与课次 5')
-    if '◆ 实训 3-1' in t3 or '◆ 综合实训 4-1' in t3:
-        issues.append('第 3 章不应再含实训块')
+    if '◆ 实训 3-1' not in t3:
+        issues.append('第 3 章缺 ◆ 实训 3-1')
     if '◆ 综合实训 4-1' not in t4:
         issues.append('第 4 章缺 ◆ 综合实训 4-1')
     old = re.findall(r'^## [56]\.\d+ ', t4, re.M)
@@ -153,7 +153,7 @@ def a5_lesson_map(book, chaps):
     row4 = next((l for l in ft.splitlines() if l.startswith('| 4 |')), '')
     row5 = next((l for l in ft.splitlines() if l.startswith('| 5 |')), '')
     checks = [
-        (row3, '第 3 章', '2 理论', 'T', '课次 3'),
+        (row3, '第 3 章', '4（2 理论 + 2 实践）', 'T + P', '课次 3'),
         (row4, '第 4 章', '2 理论', 'T', '课次 4'),
         (row5, '第 4 章', '2 实践', 'P', '课次 5'),
     ]
