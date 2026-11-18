@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status
 
 from . import param, schema, service
 
-router = APIRouter(prefix="/departments", tags=["部门"])
+router = APIRouter(prefix="/departments", tags=["单位"])
 
 
 @router.get("", response_model=schema.DepartmentPage)

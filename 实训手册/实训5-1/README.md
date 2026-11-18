@@ -248,7 +248,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
-打开 `http://127.0.0.1:8000/docs`，应看到“部门”分组与五个端点。
+打开 `http://127.0.0.1:8000/docs`，应看到“单位”分组与五个端点。
 
 ## 九、验收标准
 

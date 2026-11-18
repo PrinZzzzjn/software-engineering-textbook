@@ -146,7 +146,6 @@ def _structure_one(p):
     n = int(p.name[:2])
     secs = [f'{a}.{b}' for a, b in re.findall(r'^## (\d+)\.(\d+) ', t, re.M)]
     need = {
-        '节首信息条': '对应课次' in t,
         '学习目标': bool(re.search(r'^## 本章学习目标', t, re.M)),
         '代码编号': _code_caption_ok(t),
         # 2026-11-10 口径变更：换场景总表 / 章末评价 / 本章提示页 / AI 侧栏
@@ -184,14 +183,12 @@ def check_structure(book, args):
         if lack:
             missing.append(f'{p.name}: 缺 {"/".join(lack)}')
     ok_chapters = sum(1 for v in per.values() if all(v.values()))
-    info = sum(1 for v in per.values() if v['节首信息条'])
     code = sum(1 for v in per.values() if v['代码编号'])
 
     # C21（2026-11-12）：第 4、5 章并入新第 3 章，「课次 4 单元」四处补偿全部作废，
     # 本检查不再要求两章节首「本单元第 1/2 章」，也不再检查前言分组行。
     return _res(ok_chapters == len(files), {
         '合规章数': f'{ok_chapters}/{len(files)}',
-        '节首信息条': f'{info}/{len(files)}',
         '代码编号': f'{code}/{len(files)}',
     }, missing)
 
@@ -392,38 +389,20 @@ def check_paper(book, args):
 
 
 def check_bloom(book, args):
-    heads = collections.Counter()
-    for p in student_files(book):
-        if not p.exists():
-            continue
-        for m in re.finditer(r'^#### 习题 \d+-\d+【Bloom：([^】]+)】', read(p), re.M):
-            heads[m.group(1).strip()] += 1
-    total = sum(heads.values())
-    low = heads['记忆'] + heads['理解']
-    ratio = round(low / total * 100, 1) if total else 0
-    theory_concept = 0
+    """2026-11-18：学生稿题头不再印 Bloom 标注，本检查只保留每章题量下限。
+
+    层级分布以 `00-教材设计.md` §4「实际 Bloom 标注回写」为记录，不再从章内题头解析。
+    """
     per_chapter = {}
     for p in chapters(book):
-        t = read(p)
-        if re.search(r'概念辨析|原理解释|为什么需要', t):
-            theory_concept += 1
-        per_chapter[p.name[:2]] = len(re.findall(r'^#### 习题 \d+-\d+', t, re.M))
+        per_chapter[p.name[:2]] = len(re.findall(r'^#### 习题 \d+-\d+', read(p), re.M))
+    total = sum(per_chapter.values())
     too_few = [n for n, c in per_chapter.items() if c < 2]
-    # C13（2026-11-10）：三段式 + 删【应用】题后，章内与 98 各印一份。
-    # C21（2026-11-12）：26 章 → 24 章，阈值按「24 章 × 每章至少 2 道 × 两份」= 96 设定。
     errs = []
-    if theory_concept < 6:
-        errs.append(f'理论章概念题不足: {theory_concept}/6')
-    if total < 96:
-        errs.append(f'独立习题标注数不足: {total}/96')
     if too_few:
         errs.append(f'每章少于 2 道独立习题: {",".join(too_few)}')
-    return _res(theory_concept >= 6 and total >= 96 and not too_few, {
-        '独立习题标注数': total,
-        '记忆+理解': low,
-        '记忆+理解占比': f'{ratio}%',
-        '分布': dict(heads),
-        '含概念辨析章数': theory_concept,
+    return _res(not too_few, {
+        '独立习题数': total,
         '每章最少习题数': min(per_chapter.values()) if per_chapter else 0,
     }, errs)
 

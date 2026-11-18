@@ -5,7 +5,7 @@ from app.core.database import get_db
 
 from . import param, schema, service
 
-router = APIRouter(prefix="/departments", tags=["部门"])
+router = APIRouter(prefix="/departments", tags=["单位"])
 
 
 @router.get("", response_model=schema.DepartmentPage)

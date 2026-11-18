@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from . import param, schema, service
 
-router = APIRouter(prefix="/departments", tags=["部门"])
+router = APIRouter(prefix="/departments", tags=["单位"])
 
 # TODO: 在下面登记五个接口，写法见教材 4.6 代码 4-6-7。
 # GET    ""                 列表，用 params: param.DeptQuery = Depends() 注入查询参数

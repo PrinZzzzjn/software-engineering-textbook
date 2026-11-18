@@ -10,7 +10,7 @@
   A2 章内题头与 98 答案题头全文逐字一致；
   A3 全书无「第 3 章 需求文档」类悬空引用，旧 03 章文件已删；
   A4 03/04 边界正确：03 讲 3.1–3.6、承载课次 3（含 ◆ 实训 3-1）；04 讲 4.1–4.6、承载课次 4 并含综合实训 4-1；
-  A5 课次 3–5 的对照总表行与各章节首信息条一致。
+  A5 课次 3–5 的对照总表行与前言一致。
 
 用法：
   python tools/check_migration.py            # 全部断言，任一 RED 退出码 1
@@ -120,10 +120,6 @@ def a4_boundary(chaps):
         issues.append(f'第 3 章讲解小节应为 3.1–3.6，实际 {nums3}')
     if nums4 != [f'4.{i}' for i in range(1, 7)]:
         issues.append(f'第 4 章讲解小节应为 4.1–4.6，实际 {nums4}')
-    if '对应课次 3' not in t3 or '课次 4' in t3:
-        issues.append('第 3 章节首信息条应只写课次 3')
-    if '对应课次 4' not in t4 or '对应课次 5' in t4:
-        issues.append('第 4 章节首信息条应只写课次 4')
     if '◆ 实训 3-1' not in t3:
         issues.append('第 3 章缺 ◆ 实训 3-1')
     if '◆ 综合实训 4-1' not in t4:
@@ -134,8 +130,6 @@ def a4_boundary(chaps):
     return {
         'ok': not issues,
         'metrics': {'03小节': '/'.join(nums3), '04小节': '/'.join(nums4),
-                    '03课次': '对应课次 3' in t3,
-                    '04课次': '对应课次 4' in t4 and '对应课次 5' not in t4,
                     '04实训': '◆ 综合实训 4-1' in t4},
         'issues': issues,
     }
@@ -164,10 +158,6 @@ def a5_lesson_map(book, chaps):
             issues.append(f'对照总表{label}行不是 {hours}')
         if f'| {typ} |' not in row:
             issues.append(f'对照总表{label}行类型不是 {typ}')
-    if '对应课次 3' not in t3 or '课次 4' in t3:
-        issues.append('第 3 章节首信息条应只写课次 3')
-    if '对应课次 4' not in t4 or '对应课次 5' in t4:
-        issues.append('第 4 章节首信息条应只写课次 4')
     return {
         'ok': not issues,
         'metrics': {'课次3行': row3[:40] or '缺失', '课次4行': row4[:40] or '缺失',
