@@ -1,11 +1,10 @@
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
 
 from . import crud, model, schema
 
 
-def list_departments(db: Session, page: int, page_size: int) -> dict:
-    items = crud.list_all(db)
+def list_departments(page: int, page_size: int) -> dict:
+    items = crud.list_all()
     start = (page - 1) * page_size
     page_items = items[start : start + page_size]
     return {
@@ -14,32 +13,30 @@ def list_departments(db: Session, page: int, page_size: int) -> dict:
     }
 
 
-def get_department(db: Session, dept_code: str) -> model.Department:
-    item = crud.get(db, dept_code)
+def get_department(dept_code: str) -> model.Department:
+    item = crud.get(dept_code)
     if item is None:
         raise HTTPException(status_code=404, detail="单位不存在")
     return item
 
 
-def create_department(
-    db: Session, data: schema.DepartmentCreate
-) -> model.Department:
-    if crud.get(db, data.dept_code) is not None:
+def create_department(data: schema.DepartmentCreate) -> model.Department:
+    if crud.get(data.dept_code) is not None:
         raise HTTPException(status_code=400, detail="单位编码已存在")
-    return crud.create(db, model.Department(**data.model_dump()))
+    return crud.create(model.Department(**data.model_dump()))
 
 
 def update_department(
-    db: Session, dept_code: str, data: schema.DepartmentUpdate
+    dept_code: str, data: schema.DepartmentUpdate
 ) -> model.Department:
-    item = crud.get(db, dept_code)
+    item = crud.get(dept_code)
     if item is None:
         raise HTTPException(status_code=404, detail="单位不存在")
-    return crud.update(db, item, data.model_dump(exclude_unset=True))
+    return crud.update(item, data.model_dump(exclude_unset=True))
 
 
-def delete_department(db: Session, dept_code: str) -> None:
-    item = crud.get(db, dept_code)
+def delete_department(dept_code: str) -> None:
+    item = crud.get(dept_code)
     if item is None:
         raise HTTPException(status_code=404, detail="单位不存在")
-    crud.delete(db, item)
+    crud.delete(item)

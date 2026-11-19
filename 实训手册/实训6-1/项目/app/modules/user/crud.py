@@ -1,32 +1,40 @@
-"""用户模块的数据访问：只取用户与写入，不判断规则（教材 6.2）。"""
+"""用户模块的数据访问：只取用户与写入，不判断规则（教材 6.1）。
 
-from sqlalchemy.orm import Session
+第 8 章换库时五个函数都会多出 db: Session 参数，职责与调用方式不变。
+"""
 
-from app.modules.user.model import User
-
-
-def get_by_username(db: Session, username: str) -> User | None:
-    return db.query(User).filter(User.username == username).first()
+from . import model
 
 
-def get_by_id(db: Session, user_id: int) -> User | None:
-    return db.query(User).filter(User.id == user_id).first()
+def get_by_username(username: str) -> model.User | None:
+    for item in model.TABLE:
+        if item.username == username:
+            return item
+    return None
 
 
-def list_all(db: Session) -> list[User]:
-    return db.query(User).order_by(User.id).all()
+def get_by_id(user_id: int) -> model.User | None:
+    for item in model.TABLE:
+        if item.id == user_id:
+            return item
+    return None
 
 
-def create(db: Session, user: User) -> User:
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+def list_all() -> list[model.User]:
+    return model.TABLE
+
+
+def create(username: str, password_hash: str) -> model.User:
+    user = model.User(
+        id=len(model.TABLE) + 1,
+        username=username,
+        password_hash=password_hash,
+    )
+    model.TABLE.append(user)
     return user
 
 
-def update(db: Session, user: User, data: dict) -> User:
+def update(user: model.User, data: dict) -> model.User:
     for key, value in data.items():
         setattr(user, key, value)
-    db.commit()
-    db.refresh(user)
     return user

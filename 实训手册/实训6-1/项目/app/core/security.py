@@ -1,6 +1,6 @@
 """密码哈希、令牌签发与解析、当前用户依赖。
 
-对应教材 6.3 与 6.5，文件按“哈希 → 令牌 → 依赖”排列。
+对应教材 6.2 与 6.4，文件按“哈希 → 令牌 → 依赖”排列。
 第 7 章会在这里追加管理员依赖。
 """
 
@@ -14,7 +14,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-# 读取 .env（第 5 章 5.6 创建）；未设置时使用教学占位值，正式部署必须设置 SECRET_KEY。
+# 读取 .env（第 5 章创建）；未设置时使用教学占位值，正式部署必须设置 SECRET_KEY。
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me-in-env")

@@ -1,35 +1,27 @@
-from sqlalchemy.orm import Session
-
 from . import model
 
 
-def list_all(db: Session) -> list[model.Department]:
-    return db.query(model.Department).all()
+def list_all() -> list[model.Department]:
+    return model.TABLE
 
 
-def get(db: Session, dept_code: str) -> model.Department | None:
-    return (
-        db.query(model.Department)
-        .filter(model.Department.dept_code == dept_code)
-        .first()
-    )
+def get(dept_code: str) -> model.Department | None:
+    for item in model.TABLE:
+        if item.dept_code == dept_code:
+            return item
+    return None
 
 
-def create(db: Session, item: model.Department) -> model.Department:
-    db.add(item)
-    db.commit()
-    db.refresh(item)
+def create(item: model.Department) -> model.Department:
+    model.TABLE.append(item)
     return item
 
 
-def update(db: Session, item: model.Department, data: dict) -> model.Department:
+def update(item: model.Department, data: dict) -> model.Department:
     for key, value in data.items():
         setattr(item, key, value)
-    db.commit()
-    db.refresh(item)
     return item
 
 
-def delete(db: Session, item: model.Department) -> None:
-    db.delete(item)
-    db.commit()
+def delete(item: model.Department) -> None:
+    model.TABLE.remove(item)

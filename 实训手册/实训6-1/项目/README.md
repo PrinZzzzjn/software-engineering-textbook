@@ -13,11 +13,12 @@ uvicorn main:app --reload
 
 ## 目录
 
-- `main.py`：创建应用、挂载模块路由、建表
-- `app/core/database.py`：引擎、会话、`Base`、`get_db`
+- `main.py`：创建应用、挂载模块路由（无建表逻辑）
 - `app/core/security.py`：密码哈希、令牌、当前用户依赖
-- `app/modules/dept/`：第 5 章的单位模块，本章把 `model.py` 与 `crud.py` 换成数据库版（六文件齐备）
-- `app/modules/user/`：本章的用户模块（model、schema、crud、service、controller）
+- `app/modules/dept/`：第 5 章的单位模块（内存版，六文件齐备，保持不变）
+- `app/modules/user/`：本章的用户模块（内存版：model、schema、crud、service、controller）
+
+用户数据放在 `app/modules/user/model.py` 的 `TABLE` 列表里，重启即失。第 8 章数据模块才引入数据库，届时只改 `model.py` 与 `crud.py`，认证逻辑不动。
 
 ## 配置
 

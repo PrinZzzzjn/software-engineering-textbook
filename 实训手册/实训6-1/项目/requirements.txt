@@ -1,7 +1,6 @@
 fastapi
 uvicorn[standard]
 pydantic
-sqlalchemy
 python-jose[cryptography]
 passlib
 python-dotenv

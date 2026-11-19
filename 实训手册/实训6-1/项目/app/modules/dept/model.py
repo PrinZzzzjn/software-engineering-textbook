@@ -1,11 +1,13 @@
-from sqlalchemy import Column, String
+"""内存版单位模型：用模块级列表代替数据库表，第 8 章换成数据库版。"""
 
-from app.core.database import Base
+from dataclasses import dataclass
 
 
-class Department(Base):
-    __tablename__ = "departments"
+@dataclass
+class Department:
+    dept_code: str
+    full_name: str
+    address: str | None = None
 
-    dept_code = Column(String(20), primary_key=True)
-    full_name = Column(String(100), nullable=False)
-    address = Column(String(500), nullable=True)
+
+TABLE: list[Department] = []
