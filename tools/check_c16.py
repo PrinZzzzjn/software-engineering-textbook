@@ -5,6 +5,11 @@
 改为新第 4 章，本探针的 05-FastAPI / 第 5 章 / 5.k 前提失效。按裁决「停用并标注，
 不重写」保留源码作历史基线，入口直接以退出码 2 退出。**
 
+**【改判 · 2026-11-19 数据库后置】** 原 check3 的 `app/core/database.py` 期望属旧契约
+（「第 7 章替换 database.py 一份文件，路径不变」）。新结构为：第 6、7 章内存版认证与账号
+管理，没有 `database.py`；第 8 章 8.1 新建 `app/core/database.py`。本探针已停用，判据不重写，
+仅在此记录口径变化；全书门禁由 tools/common.py + run_all.py 承担。
+
 设计口径（见 docs/4-6章重构规格_v3.0_待审核.md 第八节）：
   - 独立于 tools/common.py 的 CHECKS，**不占 10 项门禁**，保持「10 GREEN」守恒；
   - 只报警不判死：默认退出码 0；--strict 时任一 FAIL 返回 1；

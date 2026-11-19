@@ -24,6 +24,11 @@ DATA 中 tself / pself / checks 的历史题号已泛化为「本章独立习题
 **已停用**：直接运行或调用 `build()` 都会退出，避免把旧体例、旧章号与需求文档模板
 回灌到迁移后的教材包。确需考古时用 `ALLOW_HISTORICAL_ROLLOUT=1` 显式放行。
 
+2026-11-19 数据库后置口径：**改判** —— DATA['07'] 的「按 7.5 写 `app/core/database.py`」
+属旧章号契约。新结构：`app/core/security.py` 在第 6 章（认证内存版），`app/core/database.py`
+在第 8 章 8.1（数据模块建库）；第 6、7 章无 `database.py`。脚本已停用、DATA 历史原文不改，
+此处仅记录口径变化，避免考古时误按旧契约解读。
+
 只处理需要铺开的章；04/05/08/15 已是样板或已合并，跳过。
 """
 import os

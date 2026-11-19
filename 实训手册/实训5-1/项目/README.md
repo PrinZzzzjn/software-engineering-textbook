@@ -18,7 +18,7 @@ uvicorn main:app --reload
 
 ## 按需加入的文件
 
-- 第 6 章：`app/core/database.py`、`security.py`，以及 `main.py` 的建表三行
+- 第 6 章：`app/core/security.py`；第 8 章：`app/core/database.py` 与 `main.py` 的建表三行
 - 第 12 章：`tests/`
 
 ## 配置
