@@ -20,7 +20,7 @@ Dockerfile 写好了，第一次构建该执行什么命令？构建出来的镜
 
 读完第 22 章并完成实训后，你应该能：
 
-1. 构建、运行并验证后端镜像，能读取容器日志定位启动失败。
+1. 用最小镜像完成第一次构建、运行与日志查看，再构建、运行并验证后端镜像。
 2. 说明构建上下文与 `.dockerignore` 对镜像体积和构建速度的影响。
 3. 按“先依赖、后代码”的顺序写后端 Dockerfile，并指出缓存失效的常见写法。
 4. 为 Streamlit 前端写 Dockerfile，正确设置启动参数。
@@ -28,38 +28,42 @@ Dockerfile 写好了，第一次构建该执行什么命令？构建出来的镜
 
 ## 22.1 从 Dockerfile 到镜像：第一次构建
 
-第 21 章已经把后端运行所需的内容写进了 Dockerfile，本章直接拿它做第一次构建：
+第 21 章已经讲清 Dockerfile 每条指令的作用，但描述只有交给构建命令执行，才会变成真正能运行的镜像。这一节用 21.4 那个最小的文件做第一次构建，先完整走通"写文件 → 构建 → 运行 → 看日志"这一条链，再谈真实项目。
 
-**代码 22-1-1** · `duty/Dockerfile`（后端镜像，Python）
+**一个最小的可构建项目**
 
-```dockerfile
-FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/python:3.12.9-slim
-WORKDIR /app
-RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-EXPOSE 8000
-CMD ["python", "main.py"]
+先准备一个最小的项目。新建目录 `hello-app/`，里面放一个 `app.py` 和一个 `Dockerfile`：
+
+**代码 22-1-1** · `hello-app/app.py`（Python）
+
+```python
+print("hello from container")
 ```
 
-文件最后一行 `CMD ["python", "main.py"]` 是后端的启动配置：容器创建后执行这条命令，FastAPI 才会监听 8000。前端也需要启动配置，只是 Streamlit 的服务参数更多，放到 22.4 对照。
+**代码 22-1-2** · `hello-app/Dockerfile`（最小镜像）
+
+```dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+COPY app.py .
+CMD ["python", "app.py"]
+```
+
+这个项目没有依赖、没有配置、没有网络服务，目的只有一个：让学生第一次构建时，注意力全部放在"构建这件事本身"上，而不是被依赖安装、端口映射分散。
 
 **docker build 做的三件事**
 
-`docker build` 做三件事：读取 Dockerfile、把构建上下文（命令末尾 `.` 指向的目录）发给 Docker 守护进程、按指令逐层生成镜像。第一次构建没有缓存可用，耗时最长，这是正常的。进入后端目录执行：
+`docker build` 做三件事：读取 Dockerfile、把构建上下文（命令末尾 `.` 指向的目录）发给 Docker 守护进程、按指令逐层生成镜像。第一次构建没有缓存可用，耗时最长，这是正常的。进入项目目录执行：
 
-**代码 22-1-2** · 命令（Bash）
+**代码 22-1-3** · 命令（Bash）
 
 ```bash
-cd duty
-docker build -t duty-backend:1.0 .
-docker images | grep duty-backend
+cd hello-app
+docker build -t hello-app:1.0 .
+docker images | grep hello-app
 ```
 
-`-t` 给镜像起名并打标签，格式为 `名称:标签`；不写标签时默认 `latest`。`docker build` 的常用参数如下（本章的构建命令只用到 `-t`，其余按需使用）：
+`-t` 给镜像起名并打标签，格式为 `名称:标签`；不写标签时默认 `latest`。`docker build` 的常用参数如下（最小项目的构建只用到 `-t`，其余在真实项目里按需使用）：
 
 | 参数 | 作用 |
 | --- | --- |
@@ -70,7 +74,7 @@ docker images | grep duty-backend
 | `--build-arg 键=值` | 传入构建期变量，对应 Dockerfile 中 `ARG` 声明的值 |
 | `--target 阶段名` | 只构建多阶段中的某一阶段，多阶段构建时使用 |
 
-`docker build --help` 可以查看完整参数；命令末尾的 `.` 不能漏，它决定 `COPY` 从哪里找文件，下一节展开。
+`docker build --help` 可以查看完整参数；命令末尾的 `.` 不能漏，它决定 `COPY` 从哪里找文件，22.2 展开。
 
 构建日志（Build Log）把每条 `RUN` / `COPY` 显示为一步：第一次构建每一步都会执行；不改任何文件再构建一次，会看到对应步骤显示 `CACHED`，说明这一层被复用。最后没有报错，并且 `docker images` 能看到新镜像，构建就完成了。
 
@@ -78,17 +82,15 @@ docker images | grep duty-backend
 
 镜像构建出来后，用 `docker run` 启动容器：
 
-**代码 22-1-3** · 命令（Bash）
+**代码 22-1-4** · 命令（Bash）
 
 ```bash
-docker run -d --name duty-backend -p 8000:8000 duty-backend:1.0
-docker ps
-curl http://127.0.0.1:8000/health
+docker run --rm hello-app:1.0
 ```
 
-预期返回 `{"status":"healthy"}`。再看三处：浏览器打开 `http://127.0.0.1:8000/docs`；`docker logs duty-backend` 看启动日志；`docker exec -it duty-backend sh` 进入容器查看 `/app`。
+预期在终端看到 `hello from container`，随后容器退出。最小镜像没有常驻服务，打印完就结束，这正是我们想观察的：**容器是"镜像被运行起来的那段时间"**，进程结束容器就退出。加 `--rm` 让容器退出后自动删除，不留垃圾。
 
-`docker run` 的常用参数如下（前三个本章的代码会用到，`--rm` 适合调试，最后三个在下一章部署时会用到）：
+`docker run` 的常用参数如下（最小项目只用到 `--rm`，其余在真实项目与部署时会用到）：
 
 | 参数 | 作用 |
 | --- | --- |
@@ -100,19 +102,30 @@ curl http://127.0.0.1:8000/health
 | `-v 宿主机路径:容器路径` | 挂载目录或卷，数据不随容器删除而丢失 |
 | `--network 网络名` | 指定容器网络，让容器之间按名字互访 |
 
-`docker logs` 也有常用参数：默认输出全部日志，`-f` 持续跟踪新日志，`--tail 50` 只看最后 50 行。排查启动失败时，先看最后几十行。
+**用 docker logs 看容器做了什么**
 
-到这里，第一次构建、运行与验证完成。接下来解释两件常被忽略的事：为什么构建上下文会让构建变慢，以及为什么层顺序会让缓存失效。
+最小镜像一运行就退出，看不到中间过程。想看它运行时输出了什么，用 `docker logs`。先不带 `--rm` 启动一次，再用名字查日志：
+
+**代码 22-1-5** · 命令（Bash）
+
+```bash
+docker run --name hello-once hello-app:1.0
+docker logs hello-once
+```
+
+`docker logs` 输出容器运行时的标准输出与标准错误。它的常用参数是：默认输出全部日志，`-f` 持续跟踪新日志，`--tail 50` 只看最后 50 行。排查启动失败时，先看最后几十行——这个习惯在真实项目里会反复用到。
+
+到这里，第一次构建、运行、看日志已经完整走通。这一节用的是没有依赖、没有服务的最小项目，是为了让"构建"这件事本身先跑顺；接下来解释两件常被忽略的事——构建上下文为什么会让构建变慢，以及层顺序为什么会让缓存失效。
 
 ## 22.2 构建上下文与忽略规则
 
-22.1 的 `docker build ... .` 里，末尾的 `.` 不是 Dockerfile 所在目录，而是**构建上下文**（Build Context）：Docker 把这个目录整体发给守护进程，`COPY` 的源路径都相对于它。因此构建命令要在项目根目录执行；`COPY requirements.txt .` 找的是上下文根部的 `requirements.txt`。上下文越大，发送与扫描越慢，无关文件也越容易被复制进镜像；`.dockerignore` 就是给上下文做减法。
+22.1 的 `docker build ... .` 里，末尾的 `.` 不是 Dockerfile 所在目录，而是**构建上下文**（Build Context）：Docker 把这个目录整体发给守护进程，`COPY` 的源路径都相对于它。因此构建命令要在项目根目录执行；`COPY app.py .` 找的是上下文根部的 `app.py`。上下文越大，发送与扫描越慢，无关文件也越容易被复制进镜像；`.dockerignore` 就是给上下文做减法。
 
-**.dockerignore 与三项底线**
+**.dockerignore 与三条底线**
 
-一个可用的 `.dockerignore` 起点是下面这份清单：
+`hello-app/` 只有一个 `app.py`，看不出上下文大小的影响。设想这个目录逐渐长大：装了虚拟环境 `venv/`、跑出 `__pycache__/`、写了 `.env`、留下日志和数据库文件。此时 `COPY . .`（在更完整的 Dockerfile 里）会把它们全部带进镜像。一个可用的 `.dockerignore` 起点是下面这份清单：
 
-**代码 22-1-4** · 示例（文本）
+**代码 22-1-6** · 示例（文本）
 
 ```text
 __pycache__
@@ -127,13 +140,13 @@ env
 .pytest_cache
 ```
 
-三项底线：`.env` 不能进镜像（含密钥）；`venv/` 不能进镜像（本机虚拟环境）；`*.sqlite3` 与 `*.log` 不能进镜像（本机数据与日志）。再加 `.git/`、`__pycache__/`，上下文会小很多。
+三条底线：`.env` 不能进镜像（含密钥）；`venv/` 不能进镜像（本机虚拟环境）；`*.sqlite3` 与 `*.log` 不能进镜像（本机数据与日志）。再加 `.git/`、`__pycache__/`，上下文会小很多。
 
-**两份 .dockerignore**
+**忽略规则作用于哪次构建**
 
-本章会构建两个镜像，因此有两个构建上下文：`duty/` 与 `duty_frontend/`；`.dockerignore` 要分别放在这两个目录的根部，内容可以相同，在 `duty_frontend/` 里构建时，`duty/` 的忽略规则不会自动生效。
+一个关键的理解是：`.dockerignore` 只影响**写进它的那一次构建**，而且只对**它所在的目录**生效。它不会删除已经进入旧镜像的文件，也不会自动对别的目录生效。一个项目里如果有多个构建上下文（例如后端目录和前端目录各构建一个镜像），`.dockerignore` 要分别放在各自的根目录，内容可以相同，但互不覆盖。
 
-忽略规则写得太宽，可能把运行需要的静态文件、模板、配置示例也排除掉，构建成功但运行报“文件不存在”；写得太松，`venv/`、日志、数据库又进了镜像。一个可用的判据是：**构建后用 `docker run ... ls` 看一遍 `/app`，确认“运行需要的都在、运行不需要的都不在”。**
+忽略规则写得太宽，可能把运行需要的静态文件、模板、配置示例也排除掉，构建成功但运行报"文件不存在"；写得太松，`venv/`、日志、数据库又进了镜像。一个可用的判据是：**构建后用 `docker run ... ls` 看一遍容器里的工作目录，确认"运行需要的都在、运行不需要的都不在"。**
 
 构建与运行中最常见的问题可以先查下表：
 
@@ -148,11 +161,49 @@ env
 | `/health` 不通 | 服务没监听 `0.0.0.0` | 检查启动命令 |
 | `docker exec` 进不去 | 容器已退出 | 先 `docker ps -a` 看状态 |
 
-> 💡 **易错点**：以为 `.dockerignore` 会删除已经进入镜像的文件。它只影响“下一次构建时上下文里有什么”；已经构建出的镜像要重新构建才会变小。
+> 💡 **易错点**：以为 `.dockerignore` 会删除已经进入镜像的文件。它只影响"下一次构建时上下文里有什么"；已经构建出的镜像要重新构建才会变小。
 
 ## 22.3 缓存与层顺序
 
 构建上下文决定一次构建要处理多少文件，层顺序决定第二次构建能复用多少。上下文已经通过 `.dockerignore` 控制住，这一节看层顺序。
+
+**一个带依赖的最小项目**
+
+22.1 的最小镜像没有依赖，讲不了"依赖层缓存"这件事，因为缓存的意义恰恰来自"装依赖很慢、且依赖很少变"。因此这里换一个稍大一点、但仍是最小程度的项目：一个只有两行代码的 FastAPI 服务，依赖清单里只放 `fastapi` 一项。
+
+**代码 22-1-7** · `mini-api/main.py`（Python）
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI()
+
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+```
+
+**代码 22-1-8** · `mini-api/requirements.txt`（文本）
+
+```text
+fastapi
+```
+
+它的 Dockerfile 与最小镜像相比，多了"复制依赖清单、安装依赖"两步：
+
+**代码 22-1-9** · `mini-api/Dockerfile`（Python）
+
+```dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+现在有了"依赖"和"代码"两类会变化的东西，层顺序的影响才看得见。
 
 **先 COPY . . 的代价**
 
@@ -163,13 +214,13 @@ env
 | 镜像大 | `venv/`、`.git/`、日志、数据库全进了镜像层 |
 | 缓存失效 | 任何文件变化都会让 `COPY . .` 这一层变化，后面的 `RUN pip install` 全部重建 |
 
-**缓存**是 Docker 按层复用的机制（Docker 官方文档）：某一层变了，它和它上面的所有层都要重建；下面的层命中缓存。构建顺序的核心原则可以概括为一句话：“把变化频繁的内容放在后面”。
+**缓存**是 Docker 按层复用的机制（Docker 官方文档）：某一层变了，它和它上面的所有层都要重建；下面的层命中缓存。构建顺序的核心原则可以概括为一句话："把变化频繁的内容放在后面"。
 
 > 💡 **易错点**：把 `COPY . .` 放在装依赖之前。业务代码一改，依赖层就失效，每次构建都重新装库；正确写法是先复制依赖清单、装依赖，再复制代码。
 
-**Dockerfile 的六行顺序**
+**六行顺序为什么这样排**
 
-回到 22.1 的代码 22-1-1，逐行看它为什么这样排：
+回到代码 22-1-9，逐行看它为什么这样排：
 
 | 顺序 | 指令 | 为什么放这里 |
 | --- | --- | --- |
@@ -178,16 +229,54 @@ env
 | 3 | `COPY requirements.txt .` | 依赖清单变化少，先复制 |
 | 4 | `RUN pip install` | 依赖层尽量复用 |
 | 5 | `COPY . .` | 代码变化频繁，放最后 |
-| 6 | `ENV` | 运行行为固定 |
-| 7 | `EXPOSE` / `CMD` | 声明端口与启动方式 |
+| 6 | `CMD` | 声明启动方式 |
 
-改一行业务代码后再执行 `docker build -t duty-backend:1.1 .`，构建日志里 `COPY requirements.txt .` 与 `RUN pip install` 显示 `CACHED`，只有 `COPY . .` 及其后的层重新执行，依赖层命中缓存。反过来，如果改了 `requirements.txt`，依赖层及其上层都会重建，基础层仍然命中缓存。
+改一行业务代码后再执行 `docker build -t mini-api:1.1 .`，构建日志里 `COPY requirements.txt .` 与 `RUN pip install` 显示 `CACHED`，只有 `COPY . .` 及其后的层重新执行，依赖层命中缓存。反过来，如果改了 `requirements.txt`，依赖层及其上层都会重建，基础层仍然命中缓存。
 
-## 22.4 前端镜像的启动参数
+## 22.4 真实项目：后端镜像
 
-本章说的**前端**，指第 20 章完成的 Streamlit 应用（`duty_frontend/`）：它用 Python 写页面，自带 Web 服务，不是用 Node/React 构建出的静态站点。因此它的 Dockerfile 与后端结构相似。后端的启动配置已经在 22.1 给出（`CMD ["python", "main.py"]`）；前端同样在容器启动时执行一条命令，区别在 Streamlit 需要显式指定端口、监听地址与 headless 模式。
+前面三节用最小项目把构建、上下文、缓存三个机制走通了。现在把它们用到真正的后端项目上——第 20 章完成的 `duty` 后端。它的 Dockerfile 与 `mini-api` 结构一致，只是更完整：多了 pip 源配置、双环境变量、端口声明。
 
-**代码 22-1-5** · `duty_frontend/Dockerfile`（前端镜像，Python）
+**代码 22-1-10** · `duty/Dockerfile`（后端镜像，Python）
+
+```dockerfile
+FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/python:3.12.9-slim
+WORKDIR /app
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+EXPOSE 8000
+CMD ["python", "main.py"]
+```
+
+对照 `mini-api` 的 Dockerfile，逐行看"真实项目多出来的东西"：第一行 `FROM` 用的是带镜像源前缀的完整地址（课程环境用华为云镜像源，避免直接拉 Docker Hub 超时）；第三行 `RUN pip config set ...` 把 pip 的默认源换成清华源，同样是网络考虑；`ENV` 设了两个环境变量——`PYTHONDONTWRITEBYTECODE` 让 Python 不生成 `.pyc` 缓存文件，`PYTHONUNBUFFERED` 让日志立即输出、不被缓冲。文件最后一行 `CMD ["python", "main.py"]` 是后端的启动配置：容器创建后执行这条命令，FastAPI 才会监听 8000。
+
+**构建、运行与验证**
+
+进入后端目录，按 22.1 已经熟练的流程构建并启动：
+
+**代码 22-1-11** · 命令（Bash）
+
+```bash
+cd duty
+docker build -t duty-backend:1.0 .
+docker run -d --name duty-backend -p 8000:8000 duty-backend:1.0
+docker ps
+curl http://127.0.0.1:8000/health
+```
+
+预期返回 `{"status":"healthy"}`。与最小镜像不同，后端是常驻服务，要用 `-d` 后台运行、`-p` 映射端口。验证有三处：浏览器打开 `http://127.0.0.1:8000/docs` 看接口文档；`docker logs duty-backend` 看启动日志；`docker exec -it duty-backend sh` 进入容器查看 `/app` 里有什么。这三处分别对应"服务可用""启动正常""镜像内容正确"三个层面的验证。
+
+到这里，真实后端镜像已经能构建、能运行、能验证。下一节打包前端镜像，并解释一个跨容器访问时才会暴露的问题。
+
+## 22.5 前端镜像的启动参数
+
+本章说的**前端**，指第 20 章完成的 Streamlit 应用（`duty_frontend/`）：它用 Python 写页面，自带 Web 服务，不是用 Node/React 构建出的静态站点。因此它的 Dockerfile 与后端结构相似。后端的启动配置已经在 22.4 给出（`CMD ["python", "main.py"]`）；前端同样在容器启动时执行一条命令，区别在 Streamlit 需要显式指定端口、监听地址与 headless 模式。
+
+**代码 22-1-12** · `duty_frontend/Dockerfile`（前端镜像，Python）
 
 ```dockerfile
 FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/python:3.12.9-slim
@@ -207,7 +296,7 @@ CMD ["streamlit", "run", "app.py", \
 
 **Streamlit 的三个启动参数**
 
-Streamlit 的启动参数写在 `CMD` 里，三个参数各管一件事：
+同样是"容器启动时执行一条命令"，为什么后端的 `CMD` 只有一句 `python main.py`，前端却要挂一长串参数？差别在于：后端自己知道自己该监听哪个端口、怎样运行；而 Streamlit 默认是为"在本机开发"设计的，它的默认行为在容器这个无显示器、无浏览器的环境里会出错。所以要显式告诉它三件事——监听哪个端口、监听哪些网卡、别去开浏览器：
 
 | 参数 | 作用 | 不写会怎样 |
 | --- | --- | --- |
@@ -215,9 +304,11 @@ Streamlit 的启动参数写在 `CMD` 里，三个参数各管一件事：
 | `--server.address=0.0.0.0` | 监听所有网卡 | 只监听容器内回环，宿主机访问不到 |
 | `--server.headless=true` | 不自动打开浏览器 | 容器里会尝试开浏览器，报错或卡住 |
 
+这三条正好对应 21.5 讲过的两个坑：`--server.address=0.0.0.0` 对应"容器内服务必须监听所有网卡"，否则宿主机转发进来的请求进不来；`--server.headless=true` 是容器特有的新问题——容器里没有图形界面，Streamlit 却默认在启动后自动打开浏览器，这步在容器里必然失败。理解了"默认行为 vs 容器环境"的冲突，这三个参数就不是要背的清单，而是三处必然要修的默认值。
+
 写好 Dockerfile 后，进入前端目录构建并启动：
 
-**代码 22-1-6** · 命令（Bash）
+**代码 22-1-13** · 命令（Bash）
 
 ```bash
 cd duty_frontend
@@ -233,7 +324,7 @@ docker run -d --name duty-frontend -p 8501:8501 duty-frontend:1.0
 
 登录失败的原因在 `duty_frontend/config.py`：
 
-**代码 22-1-7** · 示例代码（Python）
+**代码 22-1-14** · 示例代码（Python）
 
 ```python
 API_BASE_URL = os.getenv("DUTY_API_BASE_URL", "http://127.0.0.1:8000")
@@ -243,24 +334,24 @@ API_BASE_URL = os.getenv("DUTY_API_BASE_URL", "http://127.0.0.1:8000")
 
 本章只记录现象与原因，不解决；下一章用环境变量 `DUTY_API_BASE_URL` 与容器网络让前端找到后端。
 
-## 22.5 镜像体积优化与多阶段构建
+## 22.6 镜像体积优化与多阶段构建
 
 **体积来自哪一层**
 
 优化之前先看体积来自哪里：
 
-**代码 22-1-8** · 命令（Bash）
+**代码 22-1-15** · 命令（Bash）
 
 ```bash
 docker images
 docker history duty-backend:1.0
 ```
 
-`docker images` 看总量，`docker history` 按层列出每一层的大小。先找出占比最大的层，再决定优化哪一项。
+`docker images` 看总量，`docker history` 按层列出每一层的大小。为什么要先做这一步？因为镜像体积是各层之和，而层有大有小——基础镜像层、依赖层、代码层的体积差通常有数量级。如果不知道体积主要来自哪一层，就只能盲目地"这里删一点、那里删一点"；先找出占比最大的层，才知道该从哪里下手。这正是 21.3 分层知识的直接用途：**体积问题要按层定位，而不是看总量瞎猜。**
 
 **五项优化的顺序**
 
-优化按从易到难排序（Docker 官方文档与 OWASP Docker Security 的建议，按课程项目排序）；前四项只改 Dockerfile 的一两行，最后一项要调整文件结构：
+找出最大的层之后，再来谈优化手段。优化不是越多越好，也不是随意排列——它按"从易到难、从大到小"排序（Docker 官方文档与 OWASP Docker Security 的建议，按课程项目排序）：前四项只改 Dockerfile 的一两行，最后一项要调整文件结构：
 
 1. 换用精简基础镜像（`slim`），去掉编译工具与文档。
 2. 先复制依赖清单并安装依赖，再复制代码，让依赖层长期命中缓存。
@@ -268,7 +359,7 @@ docker history duty-backend:1.0
 4. 用 `.dockerignore` 排除虚拟环境、日志、数据库等无关文件。
 5. 采用多阶段构建：构建阶段安装工具、生成产物，运行阶段只复制产物。
 
-每做一项就重新构建并比对体积，确认没有影响运行；不要一次改五处，否则体积没降下来时不知道是哪一项无效。
+这个顺序背后是一条线索：前两项针对的是体积最大的基础层和依赖层，后三项针对的是本不该进镜像的"多余内容"。先处理"该小的没小"（基础镜像、依赖缓存），再处理"该没的没删"（缓存文件、无关文件、构建工具）。每做一项就重新构建并比对体积，确认没有影响运行；不要一次改五处，否则体积没降下来时不知道是哪一项无效。
 
 最后一项多阶段构建的写法是：第一个 `FROM` 作为构建阶段，装编译工具、构建产物；第二个 `FROM` 用精简基础镜像，只 `COPY --from=构建阶段` 需要的产物（Docker 官方文档）。这样运行镜像里没有构建工具，体积更小、攻击面更窄。
 
@@ -343,7 +434,7 @@ CMD ["python", "main.py"]
 ### 三、操作步骤
 
 1. **构建并运行后端镜像**
-   - 做什么：用 22.1 的 Dockerfile 完成第一次构建与启动
+   - 做什么：用 22.4 的 Dockerfile 完成第一次构建与启动
    - 操作：`docker build -t duty-backend:1.0 .`，再 `docker run -d --name duty-backend -p 8000:8000 duty-backend:1.0`
    - 预期输出：`docker ps` 能看到容器，`curl http://127.0.0.1:8000/health` 返回 `{"status":"healthy"}`
    - 做错会看到什么：容器退出 → `docker logs duty-backend` 看最后几行；端口被占用 → 改用 `-p 8001:8000`
@@ -359,7 +450,7 @@ CMD ["python", "main.py"]
    - 做错会看到什么：依赖层也重建 → `COPY . .` 放在了装依赖之前
 4. **打包并运行前端**
    - 做什么：为 Streamlit 前端写 Dockerfile，构建并启动
-   - 操作：按 22.4 写文件，`docker build -t duty-frontend:1.0 .`，再 `docker run -d --name duty-frontend -p 8501:8501 duty-frontend:1.0`
+   - 操作：按 22.5 写文件，`docker build -t duty-frontend:1.0 .`，再 `docker run -d --name duty-frontend -p 8501:8501 duty-frontend:1.0`
    - 预期输出：浏览器能打开 `http://127.0.0.1:8501`；记录数据请求的报错
    - 做错会看到什么：页面打不开 → 检查 `--server.address=0.0.0.0` 与端口映射；登录失败 → 记录容器内的 `127.0.0.1` 问题，下一章解决
 5. **优化体积**
@@ -392,7 +483,7 @@ CMD ["python", "main.py"]
 
 **核心结论**：
 
-1. `docker build` 读取 Dockerfile，把构建上下文（命令末尾 `.` 所指的目录）发给守护进程，逐层生成镜像；`COPY` 的源路径相对于上下文，常用参数有 `-t`、`-f`、`--no-cache`、`--pull`、`--build-arg`、`--target`。
+1. 先拿最小镜像走通"写文件 → 构建 → 运行 → 看日志"这一条链，再用同一套流程构建真实后端镜像；`docker build` 读取 Dockerfile，把构建上下文（命令末尾 `.` 所指的目录）发给守护进程，逐层生成镜像；`COPY` 的源路径相对于上下文，常用参数有 `-t`、`-f`、`--no-cache`、`--pull`、`--build-arg`、`--target`。
 2. `.dockerignore` 给构建上下文做减法，守住 `.env`、虚拟环境、数据库与日志三条底线。
 3. 缓存按层复用；正确顺序是先依赖后代码，改代码只重建代码层，改 `requirements.txt` 才重建依赖层。
 4. 运行用 `-d --name -p`（以及 `-e` / `-v` / `--network`）；验证用 `/health`、`/docs`、`docker logs`、`docker exec`；容器里的 `127.0.0.1` 指容器自己。
@@ -404,7 +495,7 @@ CMD ["python", "main.py"]
 
 **自检**：回到章首的学习目标，逐条问自己做到了没有——
 
-- [ ] 构建、运行并验证后端镜像，能读取容器日志定位启动失败。
+- [ ] 用最小镜像完成第一次构建、运行与日志查看，再构建、运行并验证后端镜像。
 - [ ] 说明构建上下文与 `.dockerignore` 对镜像体积和构建速度的影响。
 - [ ] 按“先依赖、后代码”的顺序写后端 Dockerfile，并指出缓存失效的常见写法。
 - [ ] 为 Streamlit 前端写 Dockerfile，正确设置启动参数。
