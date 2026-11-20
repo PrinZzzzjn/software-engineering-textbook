@@ -1,6 +1,6 @@
 """登录、登出与页面访问控制。
 
-教学要点（对应课次 19、20）：
+教学要点（对应第 16、17、18 章）：
 - Streamlit 每次交互都会从头重跑脚本，所以"登录状态"必须放在 st.session_state；
 - 每个页面顶部调用 require_login()，未登录时显示登录框并 st.stop()，
   这样即使用户直接输入页面 URL，也进不去；
@@ -30,8 +30,8 @@ def render_login() -> None:
     left, middle, right = st.columns([1, 1.15, 1])
     with middle:
         with st.container(border=True):
-            st.markdown("## 🗂️ 值班数据统计系统")
-            st.caption("专题三参考实现 · 请使用系统账号登录")
+            st.markdown("## 🗂️ 执勤电子年鉴")
+            st.caption("前端参考实现 · 请使用系统账号登录")
 
             with st.form("login_form"):
                 username = st.text_input("用户名", value="admin")
@@ -70,8 +70,8 @@ def render_user_box() -> None:
         return
 
     with st.sidebar:
-        st.markdown("### 🗂️ 值班数据统计")
-        st.caption("专题三参考实现")
+        st.markdown("### 🗂️ 执勤电子年鉴")
+        st.caption("前端参考实现")
         st.divider()
         st.caption(f"当前用户：{user.get('username', '-')}")
         st.caption(f"角色：{user.get('role', '-')}")

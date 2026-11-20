@@ -6,7 +6,7 @@
 
 from fastapi import FastAPI
 
-from app.modules.dept import controller as dept_controller
+from app.modules.department import controller as department_controller
 
 # 应用对象：所有路由最终都挂在它上面，/docs 页面也由它生成。
 app = FastAPI(title="Duty API", version="0.1.0")
@@ -20,4 +20,4 @@ def health():
 
 # 把模块路由挂到应用。模块 router 的前缀是 "/departments"，这里再加 "/api/v1"，
 # 两段相加才是完整路径 /api/v1/departments/；缺一段就会出现 404。
-app.include_router(dept_controller.router, prefix="/api/v1")
+app.include_router(department_controller.router, prefix="/api/v1")

@@ -1,7 +1,7 @@
 # 实训 5-1 实训手册：项目初始化与版本控制
 
 > **对应教材**：第 5 章《项目初始化与版本控制》章末 ◆ 实训 5-1
-> **课次**：课次 6（4 学时 · 实践，180 分钟）｜前置：第 4 章综合实训 4-1 的六文件实现；第 4 章 4.6
+> **课次**：课次 5（4 学时 · 实践，180 分钟）｜前置：第 4 章综合实训 4-1 的六文件实现；第 4 章 4.6
 > **交付**：工程仓库、设计文档更新、`/health` 与 `/docs` 验证记录、Git 历史
 
 ## 一、实训概览
@@ -11,7 +11,7 @@
 | 实训编号 | 实训 5-1 |
 | 实训名称 | 项目初始化与版本控制 |
 | 对应教材 | 第 5 章 5.1–5.6 |
-| 课次与学时 | 课次 6 · 4 学时 · 实践（180 分钟） |
+| 课次与学时 | 课次 5 · 4 学时 · 实践（180 分钟） |
 | 组织形式 | 独立完成 |
 | 场地与工具 | 可运行 Python 的计算机；终端；已安装 Git；浏览器 |
 | 配套文件 | [验收记录.md](验收记录.md)、[项目/](项目/) |
@@ -43,7 +43,7 @@
 
 | 不做的事 | 留给哪一章 |
 | --- | --- |
-| 数据库与建表 | 第 8 章 |
+| 数据库与建表 | 第 6 章 |
 | 登录认证 | 第 6、7 章 |
 | 自动化测试 | 第 12 章 |
 | 修改五个接口的行为 | 本实训不改；只迁移与工程化 |
@@ -89,7 +89,7 @@
 **预期输出**：
 
 ```bash
-python -c "from app.modules.dept import controller; print(controller.router.prefix)"
+python -c "from app.modules.department import controller; print(controller.router.prefix)"
 ```
 
 输出 `/departments`。
@@ -146,7 +146,7 @@ DEBUG=True
 ```python
 from fastapi import FastAPI
 
-from app.modules.dept import controller as dept_controller
+from app.modules.department import controller as department_controller
 
 app = FastAPI(title="Duty API", version="0.1.0")
 
@@ -156,7 +156,7 @@ def health():
     return {"status": "healthy"}
 
 
-app.include_router(dept_controller.router, prefix="/api/v1")
+app.include_router(department_controller.router, prefix="/api/v1")
 ```
 
 **预期输出**：`/health` 200、`/docs` 200、模块接口路径为 `/api/v1/departments/`。
@@ -230,7 +230,7 @@ git merge feature/health-version
 ├── README.md
 └── app/
     └── modules/
-        └── dept/
+        └── department/
             ├── __init__.py
             ├── controller.py
             ├── service.py

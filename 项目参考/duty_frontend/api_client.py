@@ -1,14 +1,15 @@
 """统一的接口请求封装。
 
-教学要点（对应课次 19、20）：
+教学要点（对应第 16、20 章）：
 1. 所有页面共用同一个请求入口，避免每个页面各写一套 requests 代码；
 2. 自动带上 Authorization: Bearer <token>，token 从 st.session_state 读取；
 3. 统一把后端的错误响应转换成 ApiError，页面只需要 try/except 一次；
 4. 遇到 401 时清除登录态，提示重新登录。
 
-注意：duty 的实际接口路径以代码为准，和部分文档存在差异，例如：
-- 部门列表是 /api/v1/departments/（复数），不是 /api/v1/department；
-- 部门列表排序参数是 sort_order，人员列表才是 order。
+接口事实以项目参考 duty-simplified 为准：
+- 业务接口不设版本前缀，集合路径直接挂在根下且无尾斜杠，例如 /departments；
+- 列表只返回 {"items": [...], "total": n}，排序参数由后端固定，前端不传 sort_by；
+- 登录是 POST /users/login；健康检查 GET /health 是独立的服务级路由。
 """
 
 from __future__ import annotations
@@ -92,7 +93,7 @@ def delete(path: str) -> Any:
 
 
 def health() -> dict:
-    """后端健康检查：/health 不在 /api/v1 前缀下，单独处理。"""
+    """后端健康检查：/health 是独立的服务级路由，单独处理。"""
     try:
         response = requests.get(f"{API_BASE_URL}/health", timeout=REQUEST_TIMEOUT)
         response.raise_for_status()
@@ -105,7 +106,7 @@ def login(username: str, password: str) -> dict:
     """登录，并把令牌与用户信息保存到 session_state。"""
     data = _request(
         "POST",
-        "/auth/login",
+        "/users/login",
         json={"username": username, "password": password},
     )
     st.session_state["access_token"] = data["access_token"]

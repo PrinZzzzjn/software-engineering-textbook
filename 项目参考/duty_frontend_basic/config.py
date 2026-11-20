@@ -11,8 +11,8 @@ import os
 # 后端服务地址。本地开发默认 127.0.0.1:8000；部署到容器时用环境变量覆盖。
 API_BASE_URL = os.getenv("DUTY_API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 
-# 后端所有业务接口的统一前缀（见 duty/app/api/v1/__init__.py）
-API_PREFIX = "/api/v1"
+# 后端业务接口不设版本前缀，资源路径直接挂在根下（见 duty-simplified/main.py）
+API_PREFIX = ""
 
 # 单次请求超时时间（秒）
 REQUEST_TIMEOUT = 10

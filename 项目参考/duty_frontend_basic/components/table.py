@@ -1,11 +1,12 @@
 """表格与分页的可复用组件。
 
-教学要点（对应课次 17、18）：
-- 列表页的"表格 + 分页"在部门、人员、工位等模块里反复出现；
+教学要点（对应第 15、18 章）：
+- 列表页的"表格 + 分页"在部门、人员、哨位等模块里反复出现；
 - 抽成组件后，各模块页面只需要关心"取哪些字段、传哪些查询参数"；
 - 这就是"抽象与复用"最朴素的例子：多个页面的相同部分只写一次。
 
 注意：分页由后端完成（传 page / page_size），前端只负责展示当前页和翻页按钮。
+后端列表只返回 items 与 total 两个字段，没有 pages / sort_by 等附加字段。
 """
 
 from __future__ import annotations
@@ -17,8 +18,16 @@ import pandas as pd
 import streamlit as st
 
 
-def render_table(items: Iterable[dict], columns: list[str] | None = None) -> None:
-    """把接口返回的 items 渲染成表格；columns 用于指定展示字段和顺序。"""
+def render_table(
+    items: Iterable[dict],
+    columns: list[str] | None = None,
+    column_config: dict | None = None,
+) -> None:
+    """把接口返回的 items 渲染成表格。
+
+    columns       指定展示字段和顺序；
+    column_config 用于把英文字段名换成中文表头、格式化日期（见第 15 章）。
+    """
     rows = list(items)
     if not rows:
         st.info("暂无数据")
@@ -27,7 +36,12 @@ def render_table(items: Iterable[dict], columns: list[str] | None = None) -> Non
     df = pd.DataFrame(rows)
     if columns:
         df = df[[c for c in columns if c in df.columns]]
-    st.dataframe(df, width="stretch", hide_index=True)
+    st.dataframe(
+        df,
+        width="stretch",
+        hide_index=True,
+        column_config=column_config,
+    )
 
 
 def pagination_bar(total: int, page: int, page_size: int, key: str) -> int:

@@ -14,11 +14,11 @@ uvicorn main:app --reload
 ## 目录
 
 - `main.py`：创建应用、挂路由
-- `app/modules/dept/`：六文件模块（`controller.py`、`service.py`、`crud.py`、`model.py`、`schema.py`、`param.py`）
+- `app/modules/department/`：六文件模块（`controller.py`、`service.py`、`crud.py`、`model.py`、`schema.py`、`param.py`）
 
 ## 按需加入的文件
 
-- 第 6 章：`app/core/security.py`；第 8 章：`app/core/database.py` 与 `main.py` 的建表三行
+- 第 8 章：`app/core/security.py`；第 6 章：`app/core/database.py` 与 `main.py` 的建表三行
 - 第 12 章：`tests/`
 
 ## 配置

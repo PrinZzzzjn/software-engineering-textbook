@@ -1,7 +1,7 @@
 # 综合实训 4-1 实训手册：接口与设计综合实践
 
 > **对应教材**：第 4 章《软件设计与建模》章末 ◆ 综合实训 4-1
-> **课次**：课次 5（2 学时 · 实践）｜前置：第 2 章需求条目与验收标准；第 3 章 3.4–3.6；第 4 章 4.1–4.6
+> **课次**：课次 4（2 学时 · 实践）｜前置：第 2 章需求条目与验收标准；第 3 章 3.4–3.6；第 4 章 4.1–4.6
 > **交付**：设计文档、六文件实现代码、接口验证记录
 
 ## 一、实训概览
@@ -11,7 +11,7 @@
 | 实训编号 | 综合实训 4-1 |
 | 实训名称 | 接口与设计综合实践 |
 | 对应教材 | 第 4 章；同时使用第 3 章的四方法与输入模型 |
-| 课次与学时 | 课次 5 · 2 学时 · 实践（90 分钟） |
+| 课次与学时 | 课次 4 · 2 学时 · 实践（90 分钟） |
 | 组织形式 | 独立完成 |
 | 场地与工具 | 可运行 Python 的计算机；浏览器；`/docs` 页面 |
 | 配套文件 | [设计文档模板.md](设计文档模板.md)、[记录表.md](记录表.md)、[starter/](starter/) |
@@ -60,7 +60,7 @@
 
 | 不做的事 | 留给哪一章 |
 | --- | --- |
-| 真实数据库与 SQLAlchemy | 第 8 章 |
+| 真实数据库与 SQLAlchemy | 第 6 章 |
 | pytest 与 TestClient 自动测试 | 第 12 章 |
 | Git 与虚拟环境配置 | 第 5 章 |
 | 登录认证与权限 | 第 6、7 章 |
@@ -111,7 +111,7 @@
 
 ### 步骤 2：写 model 与 schema（15 分钟）
 
-- 做什么：打开 starter 的 `app/modules/dept/`，把 `model.py` 的字段换成自选对象；把 `schema.py` 的输入、输出与更新模型换成对应字段。
+- 做什么：打开 starter 的 `app/modules/department/`，把 `model.py` 的字段换成自选对象；把 `schema.py` 的输入、输出与更新模型换成对应字段。
 - 预期输出：字段名、类型与约束能直接对应设计文档的表结构。
 - 做错会看到什么：输入与输出共用一个模型；内部字段出现在输出里；拆成两个模型。
 
@@ -149,7 +149,7 @@ starter/
     ├── __init__.py
     └── modules/
         ├── __init__.py
-        └── dept/
+        └── department/
             ├── __init__.py
             ├── controller.py   路由骨架，待登记五个接口
             ├── service.py      五个函数，待补全
@@ -191,7 +191,7 @@ uvicorn main:app --reload --port 8000
 | 重复删除仍返回 204 | 是否先判断资源存在 |
 | 字段错误返回 500 | 是否直接索引不存在的键；先用模型校验 |
 | 输出带出内部字段 | 是否声明 `response_model` |
-| 重启后数据消失 | 内存存储的正常行为；数据库在第 8 章引入 |
+| 重启后数据消失 | 内存存储的正常行为；数据库在第 6 章引入 |
 | 422 与 400 混用 | 输入不符合约定交 422；业务规则不满足交 `HTTPException(400)` |
 
 ## 十一、提交要求
@@ -227,7 +227,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 
 # 确认路由前缀
-python -c "from app.modules.dept import controller; print(controller.router.prefix)"
+python -c "from app.modules.department import controller; print(controller.router.prefix)"
 ```
 
 ## 附录 B：状态码速查

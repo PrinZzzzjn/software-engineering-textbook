@@ -7,8 +7,8 @@
 # 前端：http://localhost:8501
 #
 # 说明：
-# - 后端镜像内已包含示例数据库 duty.db，首次启动即可用 admin/admin123 登录；
-# - SECRET_KEY 仅为课堂示例，生产环境必须通过安全的配置方式注入；
+# - 后端镜像首次启动自动建表并写入教学演示数据（admin/admin123、四表记录）；
+# - 认证为简单令牌（hashlib 盐哈希 + 内存字典），无 SECRET_KEY / ALGORITHM；
 # - 前端通过 DUTY_API_BASE_URL 访问后端，容器间使用服务名 backend。
 
 name: duty-system
@@ -16,17 +16,11 @@ name: duty-system
 services:
   backend:
     build:
-      context: ./duty
+      context: ./duty-simplified
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: sqlite:///./duty.db
-      SECRET_KEY: change-me-in-production
-      ALGORITHM: HS256
-      DEBUG: "False"
-    volumes:
-      # 把容器内日志映射出来，便于课次26讲解日志排查
-      - ./duty/logs:/app/logs
     healthcheck:
       test:
         - CMD
