@@ -1,0 +1,22 @@
+# 课程教学依赖总表（Python 3.12）
+# 精确版本与传递依赖见三个 lock 文件；授课机（Linux ARM64）用 requirements.linux-arm64.lock.txt
+# 离线下载 wheel 时请直接用对应的 lock 文件，保证与验证过的版本一致。
+
+# 后端运行（项目参考/duty-simplified/requirements.txt；第 3、5-13 章）
+fastapi==0.165.0
+uvicorn[standard]==0.54.0
+sqlalchemy==2.1.9
+pydantic==2.14.4
+
+# 测试（第 12 章）
+pytest==9.2.0
+httpx==0.28.1
+
+# 前端 Streamlit（项目参考/duty_frontend/requirements.txt；第 14-20 章）
+# pandas 锁在 2.x：课程代码按 pandas 2 验证，3.x 行为有变化。
+streamlit>=1.50,<2
+requests>=2.31
+pandas>=2.0,<3
+
+# 可选但建议：内网让 FastAPI 的 /docs 使用本地 Swagger UI 静态资源
+swagger-ui-bundle==1.1.0
