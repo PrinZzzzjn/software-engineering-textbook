@@ -30,3 +30,7 @@ Thumbs.db
 # 样书构建中间件与产物（可重新生成，体积大）
 build/
 样书/
+
+# 离线交付物（可用 pip download / docker save 再生成，体积大）
+**/wheelhouse*/
+*_images-*.tar

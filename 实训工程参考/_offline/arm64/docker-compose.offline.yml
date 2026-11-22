@@ -1,0 +1,50 @@
+# duty 前后端容器化编排 —— 内网离线版（ARM64）
+#
+# 与项目参考/docker-compose.yml 的区别：
+#   - 服务用 image: 而非 build:，学生机 load 镜像后直接启动，不触发构建、不联网
+#   - 适用于课堂完全内网封闭、ARM64 Ubuntu 授课机
+#
+# 前置准备（教师在联网环境完成，见 离线安装说明.md）：
+#   1. docker load -i python-images-arm64.tar   # 基础镜像
+#   2. docker load -i duty-images-arm64.tar     # 业务镜像（duty-backend:1.0 / duty-frontend:1.0）
+#
+# 使用：
+#   docker compose -f docker-compose.offline.yml up -d
+#   后端：http://<授课机IP>:8000/docs
+#   前端：http://<授课机IP>:8501
+#
+# 停止：
+#   docker compose -f docker-compose.offline.yml down
+
+name: duty-system-offline
+
+services:
+  backend:
+    image: duty-backend:1.0
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: sqlite:///./duty.db
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    image: duty-frontend:1.0
+    ports:
+      - "8501:8501"
+    environment:
+      # 容器内用服务名访问后端
+      DUTY_API_BASE_URL: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

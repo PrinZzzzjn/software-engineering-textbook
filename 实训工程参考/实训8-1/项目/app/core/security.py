@@ -1,0 +1,53 @@
+import hashlib
+import secrets
+
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+
+
+def get_password_hash(password: str) -> str:
+    salt = secrets.token_hex(16)
+    digest = hashlib.sha256((salt + password).encode("utf-8")).hexdigest()
+    return f"{salt}${digest}"
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    salt, digest = hashed_password.split("$", 1)
+    return hashlib.sha256((salt + plain_password).encode("utf-8")).hexdigest() == digest
+
+
+# 令牌表：token -> user_id，内存字典，进程重启即清空
+TOKEN_STORE: dict[str, int] = {}
+
+
+def create_access_token(user_id: int) -> str:
+    token = secrets.token_hex(16)
+    TOKEN_STORE[token] = user_id
+    return token
+
+
+def resolve_token(token: str) -> int | None:
+    return TOKEN_STORE.get(token)
+
+
+bearer_scheme = HTTPBearer(auto_error=False)
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> dict:
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="未提供令牌")
+    user_id = resolve_token(credentials.credentials)
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="令牌无效")
+    from app.modules.user import crud
+
+    user = crud.get_by_id(db, user_id)
+    if user is None:
+        raise HTTPException(status_code=401, detail="令牌无效")
+    return {"id": user.id, "role": user.role}

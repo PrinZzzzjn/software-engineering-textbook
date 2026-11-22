@@ -1,0 +1,33 @@
+# 前端服务镜像 —— 内网离线构建版（ARM64）
+#
+# 与 项目参考/duty_frontend/Dockerfile 的区别：
+#   - 删掉 pip config set（不访问公网 pip 源）
+#   - 改为从本地 wheelhouse/ 安装：pip install --no-index --find-links=/wheels
+#   - wheelhouse/ 必须是 ARM64（manylinux2014_aarch64 + cp312）轮子
+#
+# 使用前提（仅当学生机需要重新构建镜像时才用）：
+#   1. 把 _offline/arm64/wheelhouse-arm64/ 复制为项目目录下的 wheelhouse/
+#   2. 把本文件放到 duty_frontend/ 目录
+#   3. docker build -t duty-frontend:1.0 ./duty_frontend
+#
+# 基础镜像说明同后端离线版。
+FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/python:3.12.9-slim
+
+WORKDIR /app
+
+# 离线安装：从本地 wheelhouse 安装，完全不访问公网
+COPY wheelhouse/ /wheels/
+COPY requirements.txt .
+RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt
+
+COPY . .
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+EXPOSE 8501
+
+CMD ["streamlit", "run", "app.py", \
+     "--server.port=8501", \
+     "--server.address=0.0.0.0", \
+     "--server.headless=true"]

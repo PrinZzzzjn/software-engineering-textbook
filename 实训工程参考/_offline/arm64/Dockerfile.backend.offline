@@ -1,0 +1,33 @@
+# 后端服务镜像 —— 内网离线构建版（ARM64）
+#
+# 与 项目参考/duty-simplified/Dockerfile 的区别：
+#   - 删掉 pip config set（不访问公网 pip 源）
+#   - 改为从本地 wheelhouse/ 安装：pip install --no-index --find-links=/wheels
+#   - wheelhouse/ 必须是 ARM64（manylinux2014_aarch64 + cp312）轮子，不能放 x86 轮子
+#
+# 使用前提（仅当学生机需要重新构建镜像时才用；正常用 load 镜像 + compose.offline.yml 即可）：
+#   1. 把 _offline/arm64/wheelhouse-arm64/ 复制为项目目录下的 wheelhouse/
+#      cp -r wheelhouse-arm64 duty-simplified/wheelhouse
+#   2. 把本文件放到 duty-simplified/ 目录，覆盖或另存为 Dockerfile
+#   3. docker build -t duty-backend:1.0 ./duty-simplified
+#      （在 ARM64 机器上直接 build；x86 机器需 buildx --platform linux/arm64）
+#
+# 基础镜像：华为云代理的 python:3.12.9-slim（多架构，含 arm64）。
+# 若 docker pull 报 no matching manifest，把 FROM 改为官方 python:3.12.9-slim。
+FROM swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/python:3.12.9-slim
+
+WORKDIR /app
+
+# 离线安装：从本地 wheelhouse 安装，完全不访问公网
+COPY wheelhouse/ /wheels/
+COPY requirements.txt .
+RUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt
+
+COPY . .
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+EXPOSE 8000
+
+CMD ["python", "main.py"]
