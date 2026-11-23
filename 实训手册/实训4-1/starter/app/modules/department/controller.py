@@ -1,3 +1,9 @@
+"""接口层：只取参数、调用 service、返回结果。请补全五个路由函数。
+
+补完后启动 main.py，打开 /docs 应看到五个单位端点。
+自检：python -c "from main import app; print(sorted(r.path for r in app.routes if r.path.startswith('/departments')))"
+"""
+
 from fastapi import APIRouter
 
 from . import param, schema, service

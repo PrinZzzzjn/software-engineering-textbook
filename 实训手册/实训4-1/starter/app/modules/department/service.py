@@ -1,4 +1,8 @@
-"""业务规则：编码重复返回 400，资源不存在返回 404。请补全五个函数。"""
+"""业务规则：编码重复返回 400，资源不存在返回 404。请补全五个函数。
+
+先补列表、详情、新增、修改、删除，再运行：
+python -c "from app.modules.department import schema, service; data=schema.DepartmentCreate(dept_code='D01', full_name='一中队'); service.create_department(data); print(service.list_departments(1, 10))"
+"""
 
 from . import crud, model, schema
 
