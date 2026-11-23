@@ -175,7 +175,7 @@ python -m pytest tests/test_api.py
 | 删除是 200 或有正文 | DELETE 装饰器和函数返回 | 声明 204，只调用 service，不返回内容 |
 | 重复编码变 422 | 是否把业务重复当字段格式 | service 查重并抛 `HTTPException(400)` |
 | 缺字段却进入函数 | 请求体是否仍为 `dict` | 改用 `DepartmentCreate`/`DepartmentUpdate`，由 Pydantic 返回 422 |
-| 分页非法却返回 200 | `DeptQuery` 与 `Depends()` | 检查 `ge=1`、`le=100`，列表签名使用模型注入 |
+| 分页非法却返回 200 | `DepartmentQueryParams` 与 `Depends()` | 检查 `ge=1`、`le=100`，列表签名使用模型注入 |
 | 修改清空了未提交字段 | 是否直接 `model_dump()` | 更新时使用 `exclude_unset=True` |
 | 输出出现内部字段 | 路由是否缺 `response_model` | 列表用 `DepartmentPage`，单条用 `DepartmentOut` |
 | 重启数据消失 | 是否误以为已使用数据库 | 这是内存版预期；持久化留待第 6 章 |

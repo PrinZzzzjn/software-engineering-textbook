@@ -52,7 +52,7 @@
 | 错误 | 400/500 混用、全部 500 | 状态码分工已正确 | 五档状态码各固化为一条用例 |
 | 重复 | 单位与人员分页代码一样 | 五个模块各写一遍 | 抽到 `paginate` |
 | 性能 | 列表不分页、循环里查库 | 列表已分页；重叠查询取回全部冲突 | 改 `.first()`；统计聚合记入已知问题 |
-| 规范 | 字段名与结构不一致 | 列表结构一致，但有死代码 | 删 `list_all`；统一列表输出模型 |
+| 规范 | 字段名与结构不一致 | 列表结构一致，但有死代码 | 统一列表输出模型；检查其它未使用代码 |
 
 ### 3.2 事务边界
 
@@ -75,7 +75,7 @@
 ### 3.5 其他不变量
 
 - 12-1 的 5 条测试逐字保留，不得为了让新用例通过而改旧断言。
-- 认证仍为 hashlib 盐哈希 + `TOKEN_STORE`，不引入 JWT、passlib、python-jose。
+- 认证仍为 PBKDF2 盐哈希 + `TOKEN_STORE`，不引入 JWT、passlib、python-jose。
 - 应用版本从 0.3.0 升到 0.4.0；运行依赖不变。
 - 不新增表、不加索引、不建汇总表；性能只要求识别。
 - 教材明确「不必自定义异常类，也不必注册全局处理器」，本工程遵守。
@@ -136,7 +136,7 @@ app/modules/*/crud.py              # 分页收拢；commit 收拢；find_overlap
 app/modules/*/schema.py            # 五个 *ListOut
 app/modules/*/controller.py        # 五个列表挂 response_model
 app/modules/duty_record/service.py # 新增 create_duty_records，单条复用
-app/modules/user/crud.py           # 删除未使用的 list_all
+app/modules/user/crud.py           # 检查未使用代码（list_all 已在第 8 章删除）
 main.py                            # 版本 0.3.0 → 0.4.0
 tests/conftest.py                  # 新增 normal_headers、db_session
 README.md（项目内）                 # 13-1 的改造、测试与交付说明

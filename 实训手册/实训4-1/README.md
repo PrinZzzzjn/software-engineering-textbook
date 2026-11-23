@@ -129,7 +129,7 @@
 
 ### 步骤 5：写 param 与 controller 五个接口（20 分钟）
 
-- 做什么：`param.py` 的 `DeptQuery` 已给出；在 `controller.py` 登记五个接口，列表用 `Depends()` 注入参数，删除声明 204。
+- 做什么：`param.py` 的 `DepartmentQueryParams` 已给出；在 `controller.py` 登记五个接口，列表用 `Depends()` 注入参数，删除声明 204。
 - 预期输出：`/docs` 出现五个端点；列表 200、详情 200、新增 201、修改 200、删除 204。
 - 做错会看到什么：删除返回 200 或带正文；检查 `status_code=204` 与函数返回值。
 

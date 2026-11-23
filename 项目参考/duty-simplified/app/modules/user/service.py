@@ -19,18 +19,7 @@ def list_users(db, params) -> dict:
     """用户列表：复用第 7 章定型的分页骨架，返回本页数据与总数。"""
     offset = (params.page - 1) * params.page_size
     items, total = crud.list_page(db, offset, params.page_size)
-    return {
-        "items": [
-            {
-                "id": u.id,
-                "username": u.username,
-                "role": u.role,
-                "is_active": u.is_active,
-            }
-            for u in items
-        ],
-        "total": total,
-    }
+    return {"items": items, "total": total}
 
 
 def update_user(db, user_id: int, data, current_user: dict) -> User:

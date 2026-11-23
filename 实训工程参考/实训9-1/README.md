@@ -23,7 +23,7 @@
 1. 区分认证与授权，说明为什么权限检查必须写在后端，而不是只隐藏前端按钮。
 2. 在既有 `get_current_user` 之上包一层管理员依赖，让未登录返回 401、普通用户返回 403。
 3. 把第 7 章的分页骨架复用到 users 表，返回 `{items, total}`，且输出不含 `password_hash`。
-4. 用 `Optional` 与 `Literal` 限定可修改字段，让非法角色与状态在进入业务层前返回 422。
+4. 用 `Literal` 与 `| None` 限定可修改字段，让非法角色与状态在进入业务层前返回 422。
 5. 在 service 中按「存在性 404 → 业务规则 400 → 写入」的顺序实现修改，并让被禁用账号无法登录。
 6. 把权限依赖挂回 department、personnel 的写接口，并完成 8-1 与 7-1 的回归。
 
@@ -32,10 +32,11 @@
 | 9.1 | 授权、角色、最小权限与权限边界表 | 本 README 第三节权限矩阵 |
 | 9.2 / 代码 9-2-1 | `get_current_admin_user` | `app/core/security.py` |
 | 9.2 / 9.3 | 管理员账号来源、`admin/admin123` | 8-1 已有 `service.create_admin` 与启动 seed，直接复用 |
-| 9.3 / 代码 9-3-1 | 分页参数 | `app/modules/user/param.py` |
-| 9.3 / 代码 9-3-2 | 分页查询 | `app/modules/user/crud.py` 的 `list_page` |
-| 9.3 / 代码 9-3-3 | 用户列表 service | `app/modules/user/service.py` 的 `list_users` |
-| 9.3 / 代码 9-3-4 | 列表接口 | `app/modules/user/controller.py` 的 `GET /users` |
+| 9.3 / 代码 9-3-1 | 列表返回模型 | `app/modules/user/schema.py` 的 `UserPage` |
+| 9.3 / 代码 9-3-2 | 分页参数 | `app/modules/user/param.py` |
+| 9.3 / 代码 9-3-3 | 分页查询 | `app/modules/user/crud.py` 的 `list_page` |
+| 9.3 / 代码 9-3-4 | 用户列表 service | `app/modules/user/service.py` 的 `list_users` |
+| 9.3 / 代码 9-3-5 | 列表接口 | `app/modules/user/controller.py` 的 `GET /users` |
 | 9.4 / 代码 9-4-1 | `UserUpdate` | `app/modules/user/schema.py` |
 | 9.4 / 代码 9-4-2 | 修改用户 service | `app/modules/user/service.py` 的 `update_user` |
 | 9.4 / 代码 9-4-3 | 修改接口 | `app/modules/user/controller.py` 的 `PUT /users/{user_id}` |
@@ -89,7 +90,7 @@
 
 **关于「禁用」的取舍**
 
-教材 `UserUpdate` 使用 `is_active: Optional[Literal[0, 1]]`，未新增 `disabled` 字段；本项目严格沿用该字段与口径，不自造字段。登录时的禁用响应按教材实训验收取 **401「账号已禁用」**；`项目参考/duty-simplified/` 当前快照写的是 403「账号已停用」，属于同一语义的不同状态码，本实训以教材验收口径为准。
+教材 `UserUpdate` 使用 `is_active: Literal[0, 1] | None`，未新增 `disabled` 字段；本项目严格沿用该字段与口径，不自造字段。登录时的禁用响应按教材实训验收取 **401「账号已禁用」**；`项目参考/duty-simplified/` 当前快照写的是 403「账号已停用」，属于同一语义的不同状态码，本实训以教材验收口径为准。
 
 **关于权限回收范围的取舍**
 
@@ -122,7 +123,7 @@
 **学生**
 
 - 已独立完成实训 8-1，能解释 `get_current_user` 如何从 Bearer 令牌取出 `{id, role}`。
-- 已读教材 9.1–9.4，知道 401 与 403 的分工、`Literal` 与 `Optional` 的作用。
+- 已读教材 9.1–9.4，知道 401 与 403 的分工、`Literal` 与 `| None` 的作用。
 - 复制 `starter/` 到自己的实训目录，先跑通 8-1 的三个用户接口，再动代码。
 - 知道 `admin/admin123` 已由 8-1 启动 seed 写入，不需要另写脚本。
 
@@ -203,7 +204,7 @@ try { Invoke-RestMethod "$base/users" -Headers @{ Authorization = "Bearer $alice
 - [ ] `PUT /users/{id}` 匿名 401、普通 403；管理员改角色/状态 200。
 - [ ] 目标用户不存在 404「用户不存在」；管理员禁用自己 400「不能禁用自己」。
 - [ ] `role="superuser"`、`is_active=2` 均 422，且 `type=literal_error`。
-- [ ] 管理员把普通用户 `is_active` 改为 0 后，该用户登录 401「账号已禁用」；改回 1 后登录 200。
+- [ ] 管理员把普通用户 `is_active` 改为 0 后，该用户登录 401「账号已禁用」，旧令牌访问 `/users/me` 也返回 401；改回 1 后登录 200。
 - [ ] 普通用户被改成 `admin` 后，旧令牌立刻可访问 `GET /users`（角色从库读）。
 - [ ] department 的 POST/PUT/DELETE：匿名 401、普通 403、管理员 201/200/204。
 - [ ] personnel 的 POST/PUT/DELETE：匿名 401、普通 403、管理员 201/200/204。
@@ -221,9 +222,10 @@ try { Invoke-RestMethod "$base/users" -Headers @{ Authorization = "Bearer $alice
 | 普通用户修改用户仍 200 | 修改接口只写了 `Depends(get_current_user)` | 改为 `Depends(get_current_admin_user)` |
 | 列表响应出现 `password_hash` | 直接返回 ORM 对象 | service 中手工组装四项字段 |
 | `total` 与 `items` 不符 | `count()` 与取页不是同一个 query | 复用 `crud.list_page` 的同一 query |
-| `Literal` 校验不生效 | 请求模型写成了普通 `str` / `int` | 用 `Optional[Literal[...]]`，422 的 `type` 为 `literal_error` |
+| `Literal` 校验不生效 | 请求模型写成了普通 `str` / `int` | 用 `Literal[...] | None`，422 的 `type` 为 `literal_error` |
 | 禁用自己仍 200 | 漏了 `current_user["id"] == user_id` | 在 404 之后、更新之前判断 |
 | 被禁用账号仍能登录 | `login` 没查 `is_active` | 在签发令牌前补检查，返回 401 |
+| 被禁用账号的旧令牌仍可用 | `get_current_user` 没查 `is_active` | 在取到 user 后补检查，返回 401 |
 | 普通用户仍能新增单位 | 依赖挂在函数体而不是路由装饰器 | POST/PUT/DELETE 装饰器都要加 |
 | 管理员也被 403 | seed 的 admin 角色不是 `admin`，或登录的不是 admin | 检查 users 表与登录账号 |
 | 改角色后仍 403 | `get_current_user` 把角色写死或缓存了 | 每次按 user_id 查库取 `role` |

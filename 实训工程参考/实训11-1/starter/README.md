@@ -27,7 +27,7 @@ python -m uvicorn main:app --port 8000
 ├── app/
 │   ├── core/
 │   │   ├── database.py      # engine、SessionLocal、Base、get_db
-│   │   └── security.py      # 盐哈希、令牌、get_current_user、get_current_admin_user
+│   │   └── security.py      # PBKDF2 盐哈希、令牌、get_current_user、get_current_admin_user
 │   └── modules/
 │       ├── department/      # 六文件；写接口挂管理员依赖
 │       ├── personnel/       # 六文件；写接口挂管理员依赖

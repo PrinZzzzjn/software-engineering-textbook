@@ -9,6 +9,7 @@ from app.modules.user.schema import (
     UserCreate,
     UserLogin,
     UserOut,
+    UserPage,
     UserUpdate,
 )
 from app.modules.user.param import UserQueryParams
@@ -32,7 +33,7 @@ def me(current_user: dict = Depends(get_current_user)):
     return current_user
 
 
-@router.get("", dependencies=[Depends(get_current_admin_user)])
+@router.get("", response_model=UserPage, dependencies=[Depends(get_current_admin_user)])
 def list_users(
     params: UserQueryParams = Depends(),
     db: Session = Depends(get_db),

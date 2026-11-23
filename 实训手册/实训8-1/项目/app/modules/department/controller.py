@@ -11,7 +11,7 @@ router = APIRouter(prefix="/departments", tags=["单位"])
 
 
 @router.get("", response_model=schema.DepartmentPage)
-def list_departments(params: param.DeptQuery = Depends(), db: Session = Depends(get_db)):
+def list_departments(params: param.DepartmentQueryParams = Depends(), db: Session = Depends(get_db)):
     return service.list_departments(db, params.page, params.page_size)
 
 

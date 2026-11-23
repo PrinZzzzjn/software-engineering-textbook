@@ -33,7 +33,7 @@ python -m uvicorn main:app --port 8000
 │   ├── core/
 │   │   ├── database.py      # engine、SessionLocal、Base、get_db、commit_or_rollback
 │   │   ├── pagination.py    # 13-1 新增：公共分页 paginate
-│   │   └── security.py      # 盐哈希、令牌、认证与授权依赖
+│   │   └── security.py      # PBKDF2 盐哈希、令牌、认证与授权依赖
 │   └── modules/
 │       ├── department/      # 六文件；列表挂输出模型
 │       ├── personnel/       # 六文件；列表挂输出模型
@@ -59,7 +59,7 @@ python -m uvicorn main:app --port 8000
 | 错误 | 请求级会话异常后可能停在失败事务里 | `app/core/database.py::get_db` | 捕获异常先 `rollback()` 再向上抛 |
 | 重复 | 五个模块各写一遍“计数 + 取页” | department / personnel / workstation / duty_record / user 的 `crud.list_page` | 收拢到 `app/core/pagination.py::paginate` |
 | 性能 | 重叠判断把整段冲突记录搬到内存 | `duty_record/crud.py::find_overlap` | 只需要“是否存在”，改用 `.first()` |
-| 规范 | 删除用户模块未使用的 `list_all` | `user/crud.py` | 删除死代码 |
+| 规范 | 检查用户模块是否还有未使用代码（`list_all` 已在第 8 章删除） | `user/crud.py` | 检查未使用代码 |
 | 规范 | 批量写入没有可验证的事务入口 | `duty_record/service.py` | 新增 `create_duty_records`，单条创建复用它 |
 
 接口契约不变：路径、请求字段、响应结构、状态码与 12-1 完全一致；列表仍返回 `{items, total}`，只是现在由输出模型裁剪。

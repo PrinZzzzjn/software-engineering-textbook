@@ -81,9 +81,9 @@ python -m uvicorn main:app --port 8000
 
 ## 认证实现要点
 
-- 密码存储格式为 `盐$摘要`：`secrets.token_hex(16)` 生成盐，`hashlib.sha256(盐 + 密码)` 生成摘要。相同密码每次注册得到不同字符串，校验时按 `$` 拆回盐与摘要重算。
+- 密码存储格式为 `盐$迭代次数$摘要`：`secrets.token_hex(16)` 生成盐，`hashlib.pbkdf2_hmac("sha256", 密码, 盐, 100_000)` 生成摘要。相同密码每次注册得到不同字符串，校验时按 `$` 拆回盐、迭代次数与摘要重算。
 - 令牌是 `secrets.token_hex(16)` 生成的随机字符串；服务端在 `TOKEN_STORE` 中登记 `token -> user_id`，令牌本身不携带角色。
-- `get_current_user` 从 `Authorization: Bearer` 取令牌，查字典得到 `user_id`，再查 `users` 表取 `role`，返回 `{id, role}`。未带令牌、令牌未登记、用户已不存在，都返回 401。
+- `get_current_user` 从 `Authorization: Bearer` 取令牌，查字典得到 `user_id`，再查 `users` 表取 `role` 与 `is_active`，返回 `{id, role}`。未带令牌、令牌未登记、用户已不存在或已禁用，都返回 401。
 - `TOKEN_STORE` 是进程内字典：服务重启后旧令牌全部失效，账号不受影响。这是本阶段已知行为。
 - 启动 seed 幂等写入 `admin / admin123`（`role=admin`），供登录验收与第 9 章账号管理使用；重复启动不会重复写入。
 

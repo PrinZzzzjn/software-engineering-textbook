@@ -231,6 +231,9 @@ def test_update_user_role_and_status_200():
     assert blocked_login.status_code == 401
     assert blocked_login.json() == {"detail": "账号已禁用"}
 
+    # 禁用也即时生效：旧令牌在下一次请求被 get_current_user 拦住
+    assert client.get("/users/me", headers=auth(alice_token)).status_code == 401
+
     enabled = client.put(f"/users/{alice['id']}", json={"is_active": 1}, headers=admin)
 
     assert enabled.status_code == 200

@@ -4,12 +4,17 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.modules.department import service
 from app.modules.department.param import DepartmentQueryParams
-from app.modules.department.schema import DepartmentCreate, DepartmentOut
+from app.modules.department.schema import (
+    DepartmentCreate,
+    DepartmentOut,
+    DepartmentPage,
+    DepartmentUpdate,
+)
 
 router = APIRouter(prefix="/departments", tags=["单位"])
 
 
-@router.get("")
+@router.get("", response_model=DepartmentPage)
 def list_departments(
     params: DepartmentQueryParams = Depends(),
     db: Session = Depends(get_db),
@@ -29,7 +34,7 @@ def read_department(dept_code: str, db: Session = Depends(get_db)):
 
 @router.put("/{dept_code}", response_model=DepartmentOut)
 def update_department(
-    dept_code: str, data: DepartmentCreate, db: Session = Depends(get_db)
+    dept_code: str, data: DepartmentUpdate, db: Session = Depends(get_db)
 ):
     return service.update_department(db, dept_code, data)
 

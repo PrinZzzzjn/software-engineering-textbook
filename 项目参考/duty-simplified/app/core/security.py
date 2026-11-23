@@ -8,21 +8,25 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 
 
-def get_password_hash(password: str) -> str:
-    """用随机盐 + SHA-256 把密码哈希化，返回 "盐$摘要"。
+ITERATIONS = 100_000
 
-    教学用实现：讲清"密码不能明文存""盐让相同密码得到不同摘要"，
-    而非直接引用不可见的第三方库。
-    """
+
+def get_password_hash(password: str) -> str:
+    """用随机盐 + PBKDF2 把密码哈希化，返回 "盐$迭代次数$摘要"。"""
     salt = secrets.token_hex(16)
-    digest = hashlib.sha256((salt + password).encode("utf-8")).hexdigest()
-    return f"{salt}${digest}"
+    digest = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), bytes.fromhex(salt), ITERATIONS
+    ).hex()
+    return f"{salt}${ITERATIONS}${digest}"
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """校验明文密码是否与已存储的哈希匹配。"""
-    salt, digest = hashed_password.split("$", 1)
-    return hashlib.sha256((salt + plain_password).encode("utf-8")).hexdigest() == digest
+    salt, iterations, digest = hashed_password.split("$", 2)
+    candidate = hashlib.pbkdf2_hmac(
+        "sha256", plain_password.encode("utf-8"), bytes.fromhex(salt), int(iterations)
+    ).hex()
+    return secrets.compare_digest(candidate, digest)
 
 
 # 令牌表：token -> user_id，内存字典，重启即失（与用户表一致）
@@ -55,6 +59,8 @@ def get_current_user(
     user = crud.get_by_id(db, user_id)
     if user is None:
         raise HTTPException(status_code=401, detail="令牌无效")
+    if not user.is_active:
+        raise HTTPException(status_code=401, detail="账号已禁用")
     return {"id": user.id, "role": user.role}
 
 

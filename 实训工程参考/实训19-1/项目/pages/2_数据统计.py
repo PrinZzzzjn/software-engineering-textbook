@@ -6,7 +6,7 @@
     GET /analytics/duty-time-distribution  24 小时分布与高峰时段
     GET /duty-records                      明细（按人员筛选）
 
-信息层级（教材 19.5）：总览（指标卡）→ 趋势与对比（两张图）→ 明细（表格）。
+信息层级（教材 19.4）：总览（指标卡）→ 趋势与对比（两张图）→ 明细（表格）。
 图表颜色 #0D9488 与 .streamlit/config.toml 的主色 #0F766E 同族，全页只用一个图表色。
 """
 

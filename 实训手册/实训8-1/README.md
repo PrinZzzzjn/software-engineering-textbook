@@ -132,7 +132,7 @@
 
 1. 第 6 章已建 `app/core/database.py`，其中 `Base` 是表模型父类、`get_db` 把一次请求的会话交给接口。
 2. 新建 `app/modules/user/__init__.py` 与 `model.py`，让 `User` 继承 `Base`，声明 `__tablename__ = "users"` 与五个字段（`id` 自增主键、`username` 唯一且非空、`password_hash`、`role`、`is_active`）。
-3. 新建 `crud.py`，写 `get_by_username`、`get_by_id`、`list_all`、`create`、`update` 五个函数，签名都带 `db: Session`，用 `db.query(User)` 读写、`db.commit()` 提交、`db.refresh()` 取回自增 id。
+3. 新建 `crud.py`，写 `get_by_username`、`get_by_id`、`create`、`update` 四个函数，签名都带 `db: Session`，用 `db.query(User)` 读写、`db.commit()` 提交、`db.refresh()` 取回自增 id。
 4. 更新 `main.py`：在已有的 `Base.metadata.create_all(bind=engine)` 之前补一行 `from app.modules.user import model as user_model`，挂上 user 路由，**保留** department 路由。`create_all` 只识别已导入的模型。
 
 **预期输出**：重启后 `duty.db` 中出现 `users` 表且初始为空；`/docs` 中出现“用户”分组；单位接口仍为 200。
@@ -146,7 +146,7 @@
 **检查点**
 
 - [ ] `User` 继承 `Base`，`users` 表已建立且初始为空
-- [ ] `crud.py` 五个函数都带 `db: Session`
+- [ ] `crud.py` 四个函数都带 `db: Session`
 - [ ] 两个模块的路由都出现在 `/docs`
 - [ ] 单位列表仍为 200
 
@@ -159,7 +159,7 @@
 **做错会看到什么**
 
 - 导入报错：文件名或所在目录写错。
-- 校验总是 `False`：注册与登录用的不是同一种哈希格式（应为 `盐$摘要`）。
+- 校验总是 `False`：注册与登录用的不是同一种哈希格式（应为 `盐$迭代次数$摘要`）。
 - 令牌查不到：`create_access_token` 没把令牌登记进 `TOKEN_STORE`。
 
 **检查点**
@@ -173,7 +173,7 @@
 **做什么**
 
 1. 新建 `schema.py`：`UserCreate`、`UserOut`、`UserLogin`、`TokenOut`；`TokenOut` 嵌套 `UserOut`。
-2. 在 `crud.py` 补齐五个函数（`get_by_username` 与 `create` 已在步骤 2 写好）。
+2. 在 `crud.py` 补齐 `get_by_id` 与 `update` 两个函数（`get_by_username` 与 `create` 已在步骤 2 写好）。
 3. 新建 `service.py`：`create_user` 调 `crud.get_by_username` 查重、哈希后调 `crud.create`；`login` 调 `crud.get_by_username`、验密码、发令牌。
 4. 新建 `controller.py`：注册 201、登录 200 两条路由，签名带 `db: Session = Depends(get_db)` 并传给 service。
 

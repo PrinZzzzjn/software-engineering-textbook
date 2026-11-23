@@ -11,10 +11,6 @@ def get_by_id(db: Session, user_id: int) -> User | None:
     return db.query(User).filter(User.id == user_id).first()
 
 
-def list_all(db: Session) -> list[User]:
-    return db.query(User).order_by(User.id).all()
-
-
 def create(db: Session, username: str, password_hash: str) -> User:
     user = User(username=username, password_hash=password_hash)
     db.add(user)

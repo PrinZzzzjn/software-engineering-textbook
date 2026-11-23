@@ -2,11 +2,14 @@
 
 from sqlalchemy.orm import Session
 
+from app.core.pagination import paginate
+
 from . import model
 
 
-def list_all(db: Session) -> list[model.Department]:
-    return db.query(model.Department).order_by(model.Department.dept_code).all()
+def list_page(db: Session, offset: int, limit: int) -> tuple[list[model.Department], int]:
+    query = db.query(model.Department).order_by(model.Department.dept_code)
+    return paginate(query, offset, limit)
 
 
 def get(db: Session, dept_code: str) -> model.Department | None:

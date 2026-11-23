@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.core.pagination import paginate
 from app.modules.user.model import User
 
 
@@ -9,10 +10,6 @@ def get_by_username(db: Session, username: str) -> User | None:
 
 def get_by_id(db: Session, user_id: int) -> User | None:
     return db.query(User).filter(User.id == user_id).first()
-
-
-def list_all(db: Session) -> list[User]:
-    return db.query(User).order_by(User.id).all()
 
 
 def create(db: Session, username: str, password_hash: str) -> User:
@@ -32,8 +29,6 @@ def update(db: Session, user: User, changes: dict) -> User:
 
 
 def list_page(db: Session, offset: int, limit: int):
-    """复用第 7 章的分页骨架：同一个 query 计数与取页，固定按 id 升序。"""
-    query = db.query(User)
-    total = query.count()
-    items = query.order_by(User.id).offset(offset).limit(limit).all()
-    return items, total
+    """复用第 7 章的分页公共件：只设置本模块的 query 与固定排序。"""
+    query = db.query(User).order_by(User.id)
+    return paginate(query, offset, limit)

@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
 
+from app.core.pagination import paginate
+
 from app.modules.department.model import Department
 
 
@@ -11,14 +13,8 @@ def list_page(db: Session, offset: int, limit: int, full_name: str | None = None
     query = db.query(Department)
     if full_name:
         query = query.filter(Department.full_name.contains(full_name))
-    total = query.count()
-    items = (
-        query.order_by(Department.dept_code)
-        .offset(offset)
-        .limit(limit)
-        .all()
-    )
-    return items, total
+    query = query.order_by(Department.dept_code)
+    return paginate(query, offset, limit)
 
 
 def create(db: Session, data):

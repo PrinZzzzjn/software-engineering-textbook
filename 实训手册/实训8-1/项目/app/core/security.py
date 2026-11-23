@@ -14,17 +14,25 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 
 
+ITERATIONS = 100_000
+
+
 def get_password_hash(password: str) -> str:
-    """注册时调用：生成随机盐，与密码拼接后做 SHA-256，返回“盐$摘要”。"""
+    """注册时调用：生成随机盐，用 PBKDF2 迭代 100000 次，返回“盐$迭代次数$摘要”。"""
     salt = secrets.token_hex(16)
-    digest = hashlib.sha256((salt + password).encode()).hexdigest()
-    return f"{salt}${digest}"
+    digest = hashlib.pbkdf2_hmac(
+        "sha256", password.encode(), bytes.fromhex(salt), ITERATIONS
+    ).hex()
+    return f"{salt}${ITERATIONS}${digest}"
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """登录时调用：从存储值取出盐，用同样的算法重算摘要并比对。"""
-    salt, digest = hashed_password.split("$", 1)
-    return hashlib.sha256((salt + plain_password).encode()).hexdigest() == digest
+    """登录时调用：从存储值取出盐与迭代次数，用同样的参数重算摘要并比对。"""
+    salt, iterations, digest = hashed_password.split("$", 2)
+    candidate = hashlib.pbkdf2_hmac(
+        "sha256", plain_password.encode(), bytes.fromhex(salt), int(iterations)
+    ).hex()
+    return secrets.compare_digest(candidate, digest)
 
 
 # 令牌表：token -> user_id，内存字典，重启即清空
@@ -65,4 +73,6 @@ def get_current_user(
     user = crud.get_by_id(db, user_id)
     if user is None:
         raise HTTPException(status_code=401, detail="令牌无效")
+    if not user.is_active:
+        raise HTTPException(status_code=401, detail="账号已禁用")
     return {"id": user.id, "role": user.role}

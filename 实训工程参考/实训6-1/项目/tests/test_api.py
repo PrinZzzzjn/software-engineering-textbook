@@ -150,13 +150,15 @@ def test_pagination_returns_requested_slice_and_total():
     default_page = client.get("/departments")
 
     assert first_page.status_code == 200
-    assert [item["dept_code"] for item in first_page.json()["items"]] == [
-        "D01",
-        "D02",
-    ]
     assert first_page.json()["total"] == 3
-    assert [item["dept_code"] for item in second_page.json()["items"]] == ["D03"]
+    assert len(first_page.json()["items"]) == 2
     assert second_page.json()["total"] == 3
+    assert len(second_page.json()["items"]) == 1
+    assert {
+        item["dept_code"] for item in first_page.json()["items"]
+    } | {
+        item["dept_code"] for item in second_page.json()["items"]
+    } == {"D01", "D02", "D03"}
     assert third_page.json() == {"items": [], "total": 3}
     assert len(default_page.json()["items"]) == 3
     assert default_page.json()["total"] == 3

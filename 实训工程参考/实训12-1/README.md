@@ -90,7 +90,7 @@
 - 本实训不新增、不修改业务接口；`app/`、`main.py`、`requirements.txt` 与 11-1 相同，版本仍为 0.3.0。
 - `tests/` 从本章起成为工程正式组成部分，与代码同仓提交；文件名与函数名都以 `test_` 开头。
 - `conftest.py` 的 `seed_admin` 用 `scope="session", autouse=True`，整轮测试只建一次管理员，且与接口读同一个库。
-- 认证仍为 hashlib 盐哈希 + `TOKEN_STORE`，不引入 JWT、passlib、python-jose。
+- 认证仍为 PBKDF2 盐哈希 + `TOKEN_STORE`，不引入 JWT、passlib、python-jose。
 - `from main import app` 要求在项目根目录用 `python -m pytest` 运行；直接在 `tests/` 里运行会报 `ModuleNotFoundError: No module named 'main'`。
 - 教材 12.5 的「改坏 3」指向 `service.py` 的 `create_duty_record()`；本工程按第 4 章六文件分工把范围查询放在 `app/modules/duty_record/crud.py::find_overlap`，条件与语义完全相同，改坏位置以本工程文件为准。
 

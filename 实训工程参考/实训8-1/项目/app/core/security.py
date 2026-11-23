@@ -8,15 +8,23 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 
 
+ITERATIONS = 100_000
+
+
 def get_password_hash(password: str) -> str:
     salt = secrets.token_hex(16)
-    digest = hashlib.sha256((salt + password).encode("utf-8")).hexdigest()
-    return f"{salt}${digest}"
+    digest = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), bytes.fromhex(salt), ITERATIONS
+    ).hex()
+    return f"{salt}${ITERATIONS}${digest}"
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    salt, digest = hashed_password.split("$", 1)
-    return hashlib.sha256((salt + plain_password).encode("utf-8")).hexdigest() == digest
+    salt, iterations, digest = hashed_password.split("$", 2)
+    candidate = hashlib.pbkdf2_hmac(
+        "sha256", plain_password.encode("utf-8"), bytes.fromhex(salt), int(iterations)
+    ).hex()
+    return secrets.compare_digest(candidate, digest)
 
 
 # 令牌表：token -> user_id，内存字典，进程重启即清空
@@ -50,4 +58,6 @@ def get_current_user(
     user = crud.get_by_id(db, user_id)
     if user is None:
         raise HTTPException(status_code=401, detail="令牌无效")
+    if not user.is_active:
+        raise HTTPException(status_code=401, detail="账号已禁用")
     return {"id": user.id, "role": user.role}

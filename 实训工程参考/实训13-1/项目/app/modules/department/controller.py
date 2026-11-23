@@ -9,6 +9,7 @@ from app.modules.department.schema import (
     DepartmentCreate,
     DepartmentListOut,
     DepartmentOut,
+    DepartmentUpdate,
 )
 
 router = APIRouter(prefix="/departments", tags=["单位"])
@@ -43,7 +44,7 @@ def read_department(dept_code: str, db: Session = Depends(get_db)):
     dependencies=[Depends(get_current_admin_user)],
 )
 def update_department(
-    dept_code: str, data: DepartmentCreate, db: Session = Depends(get_db)
+    dept_code: str, data: DepartmentUpdate, db: Session = Depends(get_db)
 ):
     return service.update_department(db, dept_code, data)
 

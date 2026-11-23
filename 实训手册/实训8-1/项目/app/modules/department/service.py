@@ -6,13 +6,9 @@ from . import crud, model, schema
 
 
 def list_departments(db, page: int, page_size: int) -> dict:
-    items = crud.list_all(db)
-    start = (page - 1) * page_size
-    page_items = items[start : start + page_size]
-    return {
-        "items": [schema.DepartmentOut.model_validate(item) for item in page_items],
-        "total": len(items),
-    }
+    offset = (page - 1) * page_size
+    items, total = crud.list_page(db, offset, page_size)
+    return {"items": items, "total": total}
 
 
 def get_department(db, dept_code: str) -> model.Department:

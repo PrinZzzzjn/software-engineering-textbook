@@ -10,7 +10,6 @@ def get_by_code(db: Session, dept_code: str):
 def list_page(db: Session, offset: int, limit: int):
     items = (
         db.query(Department)
-        .order_by(Department.dept_code)
         .offset(offset)
         .limit(limit)
         .all()

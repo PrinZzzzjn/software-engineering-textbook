@@ -3,7 +3,7 @@
 > 对应教材：第 6 章 6.1–6.4 与章末「◆ 实训 6-1」  
 > 学时：4 学时，共 180 分钟  
 > 示例对象：单位（`department`）  
-> 交付：SQLite 数据库版工程、八条接口验证记录、重启持久化证据
+> 交付：SQLite 数据库版工程、九条接口验证记录、重启持久化证据
 
 本目录是教师完整版，包含完成态、学员起点与真实实跑记录，不直接作为学生提交模板。学生从 `starter/`（5-1 完成态）出发，把内存列表替换为 SQLite 表；六文件的职责与接口契约不变。
 
@@ -13,7 +13,7 @@
 | --- | --- |
 | 主目标 1 | 推导数据为什么要落库，说明 `engine`、`Session`、`Base`、`get_db` 各管什么，并在 `main.py` 完成建表 |
 | 主目标 2 | 用 department 走通增删查改与分页，返回 `{items, total}`，错误码按层分工 |
-| 综合验证 | 新增记录后重启服务仍在；八条测试清单全部可复现 |
+| 综合验证 | 新增记录后重启服务仍在；九条测试清单全部可复现 |
 | 数据方式 | SQLite 文件 `duty.db`，`DATABASE_URL` 可覆盖；服务启动时建表并幂等 seed |
 | 完成态入口 | `项目/main.py` |
 | 学员起点 | `starter/起点说明.md` 与 5-1 完成态工程 |
@@ -42,14 +42,14 @@
 | 6.2 表结构 | departments 三字段与约束 | `项目/app/modules/department/model.py` | `dept_code` 主键、`full_name` 必填、`address` 可空，长度 20/100/500 |
 | 6.2 代码 6-2-2 | 输入与输出模型 | `项目/app/modules/department/schema.py` | 输入长度校验、输出白名单；非法输入 422 |
 | 6.2 代码 6-2-3～6-2-8 | crud、service、controller 的新增/详情/删除 | `crud.py`、`service.py`、`controller.py` | 新增 201、重复 400、详情 200/404、删除 204/404 |
-| 6.2 测试清单 | 八条接口检查 | `项目/tests/test_api.py`、`验证记录.md` | 八条全部有实测证据 |
+| 6.2 测试清单 | 九条接口检查 | `项目/tests/test_api.py`、`验证记录.md` | 九条全部有实测证据 |
 | 6.3 代码 6-3-1 | 查询参数模型 | `项目/app/modules/department/param.py` | `page≥1`、`page_size` 1–100；非法值 422 |
 | 6.3 代码 6-3-2、6-3-4、6-3-5 | offset/limit 与列表组装 | `crud.py` 的 `list_page`、`service.py` 的 `list_departments`、`controller.py` 的列表接口 | 分页切片正确、`total` 为全量条数、固定排序 |
 | 6.3 代码 6-3-3 | 响应 `{items, total}` | 列表响应 | 只返回 items 或漏 total 均不合格 |
 | 6.4 | 错误分层 | `分步实现指南.md` 阶段 4；`验证记录.md` 第三节 | 422 / 400 / 404 / 500 各归其位 |
 | 实训 6-1 步骤 1 | 建库与建表 | `分步实现指南.md` 阶段 1–2 | `/health` 200，表已建立，seed 后 `count()=2` |
 | 实训 6-1 步骤 2 | department 读写全流程 | 指南阶段 3 | 六文件齐备，分页与四类错误可复现 |
-| 实训 6-1 步骤 3 | 验证与提交 | 指南阶段 4–5；`验证记录.md` | 八条通过、重启后数据仍在、工作区干净 |
+| 实训 6-1 步骤 3 | 验证与提交 | 指南阶段 4–5；`验证记录.md` | 九条通过、重启后数据仍在、工作区干净 |
 
 简化说明：课堂固定单位示例；`users`、认证、权限、测试框架都不提前出现。教材 6-3-4 把 `offset` 计算写在 service 的调用处，本参考按 `duty-simplified` 的写法把 `offset` 计算放在 service、`crud.list_page` 只接收 `offset` 与 `limit`，语义与代码 6-3-2 一致。`tests/` 只作教师验证，不要求学生编写。
 
@@ -84,7 +84,7 @@
 | 阶段 1 | 新建 `app/core/database.py` 与包文件 | 20 | 5 | 必做 |
 | 阶段 2 | 改 `model.py`，对齐 `schema.py`，`main.py` 建表与 seed | 25 | 6 | 必做 |
 | 阶段 3 | 读写接线：`crud.py`、`service.py`、`param.py`、`controller.py` | 60 | 14 | 必做 |
-| 阶段 4 | 走八条测试清单，核对 422/400/404 | 25 | 6 | 必做 |
+| 阶段 4 | 走九条测试清单，核对 422/400/404 | 25 | 6 | 必做 |
 | 阶段 5 | 重启持久化验证、更新 README 与记录 | 20 | 5 | 必做 |
 | 阶段 6 | seed/init 拆分、分页边界、personnel 预告 | 课后 | — | 选做 |
 | 验收 | 文件、接口、数据库、仓库卫生 | 10 | 0 | 必做 |
@@ -93,7 +93,7 @@
 
 选做（课后或学有余力）：把 seed 与建表拆成独立初始化脚本；补充分页边界（越界页、`page_size` 上限调整、`total` 与过滤次序）；按第 7 章预告为 personnel 模块复用查询。
 
-若进度落后，不删「重启持久化」和「八条清单」，可把 seed 拆分、分页边界与 personnel 全部移到课后。
+若进度落后，不删「重启持久化」和「九条清单」，可把 seed 拆分、分页边界与 personnel 全部移到课后。
 
 ## 六、步骤
 
@@ -101,7 +101,7 @@
 | --- | --- | --- | --- |
 | 1 | 新建 `app/core/` 与 `database.py`；把 `model.py` 改为 ORM，`main.py` 加建表三行与幂等 seed | 可连接的 SQLite 与 `departments` 表 | `分步实现指南.md` 阶段 1–2 |
 | 2 | 改 `crud.py`、`service.py`、`param.py`、`controller.py`，接通 Session 与分页 | 五个接口可调用 | 阶段 3 |
-| 3 | 走八条测试清单，验证 422/400/404/204 | 状态码证据 | 阶段 4 |
+| 3 | 走九条测试清单，验证 422/400/404/204 | 状态码证据 | 阶段 4 |
 | 4 | 重启服务验证数据仍在，更新 README 与验证记录 | 持久化证据与文档 | 阶段 5 |
 | 5 | 提交代码、依赖、忽略规则与记录 | 干净工作区 | `README.md` 第十一节 |
 | 6 | seed/init 拆分、分页边界、personnel 预告 | 选做扩展 | 阶段 6（课后） |
@@ -204,7 +204,7 @@ python -m pytest 项目\tests -q
 | 重启后单位记录消失 | 是否仍用内存版 `model.py`；数据库文件位置 | 确认 `crud` 已改用 `Session`；确认 `DATABASE_URL` 指向同一文件 |
 | 每次启动多出重复单位 | seed 是否先查存在性 | 逐条 `filter(...).first()`，已存在则跳过 |
 | 列表只有 `items` 没有 `total` | service 是否组装总数 | `crud.list_page` 同时返回 `items` 与 `total` |
-| 翻页出现重复或顺序不稳定 | 是否漏了 `order_by` | 固定 `order_by(Department.dept_code)` 后再 `offset`、`limit` |
+| 翻页出现重复或顺序不稳定 | 本章的 `list_page` 还没带 `order_by` | 第 7 章 7.4 会补固定排序键；本章先记录现象 |
 | 新增重复编码返回 500 | 是否先查重 | service 先 `get_by_code`，重复抛 400；数据库约束作最后防线 |
 | 详情/删除不存在返回 500 | 是否直接访问空对象 | service 查不到抛 404 |
 | `ModuleNotFoundError: app.core` | 是否缺 `app/core/__init__.py`，或不在项目根执行 | 补包文件；在含 `main.py` 的目录启动 |
@@ -219,7 +219,7 @@ python -m pytest 项目\tests -q
 
 1. 代码：`app/core/database.py`、`app/core/__init__.py`、改写后的 `model.py`、`crud.py`、`service.py`、`controller.py`、`schema.py`、`param.py`、`main.py`。
 2. 根目录配置：`requirements.txt`（含 `sqlalchemy`）、`.gitignore`（含 `*.db`、`*.db-journal`）、更新后的 `README.md`。
-3. 八条接口验证记录：新增 201、重复 400、缺字段 422、列表 200 且分页正确、详情 200、不存在 404、删除 204 无正文、重复删除 404；另附重启前后同一条记录仍在的证据。
+3. 九条接口验证记录：新增 201、重复 400、缺字段 422、列表 200 且分页正确、详情 200、不存在 404、修改 200 且不存在 404、删除 204 无正文、重复删除 404；另附重启前后同一条记录仍在的证据。
 4. 仓库卫生检查：`git status` 干净，`git ls-files` 不含 `venv/`、`.env`、`*.db`、`__pycache__/`。
 
 提交前用 `git ls-files` 复核。教师完成态、`tests/`、难度评分与实测记录用于备课与验收，不代替学生操作。

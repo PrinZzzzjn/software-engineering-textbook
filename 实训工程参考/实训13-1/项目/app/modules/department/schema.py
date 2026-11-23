@@ -2,8 +2,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class DepartmentCreate(BaseModel):
-    dept_code: str = Field(..., min_length=1, max_length=20)
-    full_name: str = Field(..., min_length=1, max_length=100)
+    dept_code: str = Field(..., min_length=2, max_length=20)
+    full_name: str = Field(..., min_length=2, max_length=100)
+    address: str | None = Field(default=None, max_length=500)
+
+
+class DepartmentUpdate(BaseModel):
+    full_name: str | None = Field(default=None, min_length=2, max_length=100)
     address: str | None = Field(default=None, max_length=500)
 
 
@@ -12,11 +17,13 @@ class DepartmentOut(BaseModel):
 
     dept_code: str
     full_name: str
-    address: str | None
+    address: str | None = None
 
 
-class DepartmentListOut(BaseModel):
-    """列表响应统一为 {items, total}，由输出模型裁剪字段。"""
-
+class DepartmentPage(BaseModel):
     items: list[DepartmentOut]
     total: int
+
+
+class DepartmentListOut(DepartmentPage):
+    """13-1 的统一列表输出命名；字段与 DepartmentPage 相同。"""
