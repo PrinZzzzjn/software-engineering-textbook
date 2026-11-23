@@ -3,16 +3,18 @@
 > 对应教材：第 4 章 4.1–4.5 与章末「◆ 综合实训 4-1」
 > 学时：4 学时，180 分钟
 > 起点：`starter/`（六文件骨架，含 TODO）
-> 终点：单位模块六个职责文件 + 五个接口可调用
+> 终点：单位模块六个职责文件 + 列表/新增两个接口可调用（B 档）
+>
+> B 档说明：本实训是典型任务闭环。详情、修改、删除三个接口由教师演示，不进入课堂必做与考核；完整五接口实现见教师 `项目/`。
 
 ## 一、任务
 
 本实训以设计为主、代码为辅：
 
 1. 为单位对象写出表结构、接口清单、模块目录三节设计；
-2. 用六个文件实现五个接口：列表、详情、新增、修改、删除；
-3. 验证 200、201、204、400、404、422；
-4. 完成“表字段 ↔ 响应字段”“目录 ↔ 磁盘文件”两组一致性检查。
+2. 用六个文件实现两个接口：`GET /departments` 列表和 `POST /departments` 新增；
+3. 验证 200、201、400（重复编码）、422（缺字段）；
+4. 完成“表字段 ↔ 响应字段”“目录 ↔ 磁盘文件”两组一致性检查；详情/修改/删除接口看教师演示。
 
 每一步的语法、代码、命令与检查点见 [分步实现指南.md](分步实现指南.md)。
 
@@ -22,10 +24,9 @@
 | --- | --- |
 | 设计文档 | 表结构、接口清单、模块目录三节齐全；有一条规定性失败 |
 | 六文件 | `controller.py`、`service.py`、`crud.py`、`model.py`、`schema.py`、`param.py` 齐全 |
-| 五个接口 | `/docs` 中五个单位端点均可执行 |
-| 状态码 | 200、201、204、400、404、422 各至少一次真实记录 |
+| 两个接口 | `/docs` 中列表和新增两个端点均可执行；详情/修改/删除为教师演示 |
+| 状态码 | 200、201、400、422 各至少一次真实记录 |
 | 列表契约 | 200，返回 `{items, total}`；分页参数真正影响切片 |
-| 删除语义 | 204 且响应体为空；重复删除 404 |
 | 一致性 | 两组检查逐项通过，有依据 |
 
 ## 三、课前准备
@@ -55,7 +56,7 @@ python -m pip install --no-index --find-links=<wheelhouse 路径> -r requirement
 | 1 | 设计文档：单位对象 | 25 |
 | 2 | `model.py`：dataclass 与内存表 | 20 |
 | 3 | `schema.py`：Pydantic 模型 | 20 |
-| 4 | `crud.py`：五个存取函数 | 25 |
+| 4 | `crud.py`：list_all/create 两个存取函数 | 25 |
 | 5 | `service.py`：规则与分页 | 30 |
 | 6 | `param.py` + `controller.py` + `main.py` | 30 |
 | 7 | 状态码验证与两组一致性 | 15 |
@@ -90,7 +91,7 @@ python -c "from app.modules.department import model, schema; print(model.Departm
 | `ModuleNotFoundError: app` | 当前目录与 `__init__.py` | 回到含 `main.py` 的目录，补齐三个包文件 |
 | `NotImplementedError` | 是否还在骨架 | 按阶段补 crud、service、controller |
 | 新增仍是 200 | POST 装饰器 | 声明 `status_code=status.HTTP_201_CREATED` |
-| 删除是 200 或带正文 | DELETE 装饰器与函数返回 | 声明 204；只调用 service，不返回内容 |
+| 删除是 200 或带正文（教师演示） | DELETE 装饰器与函数返回 | 声明 204；只调用 service，不返回内容 |
 | 重复编码变 422 | 是否把业务重复当字段格式 | service 查重并抛 `HTTPException(400)` |
 | 缺字段却进入函数 | 请求体是否仍为 `dict` | 改用 `DepartmentCreate` / `DepartmentUpdate` |
 | 分页非法却返回 200 | `DepartmentQueryParams` 与 `Depends()` | 检查 `ge=1`、`le=100` |
@@ -102,7 +103,7 @@ python -c "from app.modules.department import model, schema; print(model.Departm
 
 1. 设计文档：三节 + 两组一致性检查，不能只抄结论；
 2. 六文件代码 + 根 `main.py`；
-3. 记录表：200/201/204/400/404/422 各至少一行。
+3. 记录表：200/201/400/422 各至少一行；删除 204、不存在 404 行保留教师演示记录，不计入课堂达标。
 
 提交前删除 `__pycache__/`、`.pytest_cache/`；不要提交 `venv/`、数据库或 `.env`。
 
