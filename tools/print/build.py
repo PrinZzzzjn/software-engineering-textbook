@@ -23,10 +23,10 @@ FRONT = [
     ("00-概念地图.md", "全书概念地图"),
 ]
 
+# 本轮送审样书只收术语表；参考答案为教师用材料，暂不随书印刷，需要时把下面一行放开即可。
 APPENDICES = [
     ("术语表.md", "附录 A", "术语表"),
-    ("98-参考答案.md", "附录 B", "参考答案（教师用）"),
-    ("99-表现性任务.md", "附录 C", "表现性任务"),
+    # ("98-参考答案.md", "附录 B", "参考答案（教师用）"),
 ]
 
 _CHAPTER_RE = re.compile(r"^#\s*第\s*(\d+)\s*章\s*(.+?)\s*$")
@@ -47,9 +47,11 @@ def compile_typ(typ_path: Path, out_pdf: Path) -> None:
 
 
 def chapter_files() -> list[Path]:
+    """按章号排序返回正文文件；跳过临时副本（文件名含「修改版」「副本」）。"""
     files = sorted(SOURCE_DIR.glob("0[1-9]-*.md")) + sorted(SOURCE_DIR.glob("1[0-9]-*.md"))
     files += sorted(SOURCE_DIR.glob("2[0-4]-*.md"))
-    return files
+    skip = ("修改版", "副本", "备份")
+    return [f for f in files if not any(word in f.name for word in skip)]
 
 
 def chapter_meta(path: Path) -> tuple[str, str]:
@@ -92,21 +94,33 @@ def _drop_editorial(text: str) -> str:
     return "\n".join(kept)
 
 
-def parts_from_preface() -> list[tuple[str, str, int]]:
-    """从 00-前言 的手写目录里取出四篇的名称与起始章。"""
-    text = (SOURCE_DIR / "00-前言.md").read_text(encoding="utf-8")
-    parts: list[tuple[str, str, int]] = []
-    current: str | None = None
-    current_title = ""
+# 篇结构：篇名与起始章号。原先从前言的手写目录解析，前言改为规范体例后在此固定。
+PARTS = [
+    ("第一篇", "软件工程基础与需求分析", 1),
+    ("第二篇", "后端服务开发", 3),
+    ("第三篇", "前端界面构建", 14),
+    ("第四篇", "软件部署与系统交付", 21),
+]
+
+
+def _strip_classroom(text: str) -> str:
+    """删去「## ◇ 课堂活动块」整节——课堂环节属教师用材料，不进样书。"""
+    kept: list[str] = []
+    skipping = False
     for line in text.splitlines():
-        part = _PART_RE.match(line)
-        if part:
-            current, current_title = part.group(1), part.group(2)
+        if line.startswith("## ◇ 课堂活动块"):
+            skipping = True
             continue
-        item = _ITEM_RE.match(line)
-        if item and current and not any(p[0] == current for p in parts):
-            parts.append((current, current_title, int(item.group(1))))
-    return parts
+        if skipping and line.startswith("## "):
+            skipping = False
+        if skipping:
+            continue
+        kept.append(line)
+    return "\n".join(kept)
+
+
+def parts_from_outline() -> list[tuple[str, str, int]]:
+    return list(PARTS)
 
 
 def _resolver(text: str):
@@ -129,6 +143,7 @@ def _body_typst(path: Path, *, drop_editorial: bool = False) -> str:
     text = path.read_text(encoding="utf-8")
     if drop_editorial:
         text = _drop_editorial(text)
+    text = _strip_classroom(text)
     text = _strip_body(text)
     return convert(text, heading_offset=1, resolve_mermaid=_resolver(text))
 
@@ -161,7 +176,7 @@ def book_typst() -> str:
     chunks.append("#toc-page()")
     chunks.append('#pagebreak(to: "odd", weak: true)\n#counter(page).update(1)\n#set page(numbering: "1")')
 
-    parts = {start: (no, title) for no, title, start in parts_from_preface()}
+    parts = {start: (no, title) for no, title, start in parts_from_outline()}
     seen_parts: set[str] = set()
     for path in chapter_files():
         no, title = chapter_meta(path)
@@ -174,8 +189,12 @@ def book_typst() -> str:
         chunks.append(_body_typst(path))
 
     for name, no, title in APPENDICES:
+        path = SOURCE_DIR / name
+        if not path.exists():
+            print(f"跳过缺失的附录：{name}")
+            continue
         chunks.append(f'#section("{no} {title}")')
-        chunks.append(_body_typst(SOURCE_DIR / name, drop_editorial=True))
+        chunks.append(_body_typst(path, drop_editorial=True))
 
     return "\n\n".join(chunks)
 
