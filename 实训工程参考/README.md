@@ -72,6 +72,8 @@ uvicorn main:app --port 8000  # 在 项目/ 目录内启动，访问 /docs 与 /
 - 授课机：ARM64 Ubuntu + Python 3.12，**完全内网封闭**。与开发机的版本差异以授课机为准（总计划 R9）。
 - `_offline/arm64/wheelhouse-arm64/`：56 个 aarch64 预编译 wheel，已就绪，供学生机离线 `pip install --no-index --find-links`。
 - `_offline/arm64/` 另有内网版 Dockerfile、`docker-compose.offline.yml` 与 [离线安装说明.md](_offline/arm64/离线安装说明.md)。
+- 内网 `/docs`：FastAPI 默认从公网 CDN 加载 Swagger UI，页面会空白。用 [_shared/offline_docs/](_shared/offline_docs/) 的 `sitecustomize.py` 在授课机 venv 预置本地 Swagger；学员 `main.py` 不变。备用通道为 `/openapi.json` + `curl`。
+- wheelhouse 与镜像 tar 不提交仓库；实际路径以授课机预置为准。
 - **ARM64 镜像 tar（python-images / duty-images）暂缓**：2026-11-22 决定先推进实训内容设计，Docker 环境后续再补；22-1～24-1 的实跑验证在 Docker 可用前按总计划 6.3 降级并标注。
 
 ## 六、共享材料
