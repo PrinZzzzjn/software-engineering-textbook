@@ -26,6 +26,13 @@ def client():
         yield test_client
 
 
+def test_health_returns_ok(client):
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
 def test_list_departments_returns_items_and_total(client):
     response = client.get("/departments")
 

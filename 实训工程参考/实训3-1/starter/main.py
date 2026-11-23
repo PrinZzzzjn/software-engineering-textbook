@@ -1,18 +1,11 @@
-from fastapi import FastAPI
-
-app = FastAPI()
-
-DEPARTMENTS = {
-    "D01": {"dept_code": "D01", "full_name": "一中队", "address": "一号楼"},
-}
-
-
-@app.get("/departments")
-def list_departments():
-    return {"items": list(DEPARTMENTS.values()), "total": len(DEPARTMENTS)}
-
-
-# TODO 1：补 GET /departments/{dept_code}，不存在时返回 404
-# TODO 2：补 POST /departments，成功返回 201，缺字段或编码重复返回 400
-# TODO 3：补 PUT /departments/{dept_code}，成功返回 200，不存在返回 404
-# TODO 4：补 DELETE /departments/{dept_code}，成功返回 204，不存在返回 404
+# 实训 3-1 起点
+#
+# 本文件故意不提供可运行代码：从第 1 步开始，自己写出最小应用。
+#
+# 第 1 步目标：
+# 1. 导入 FastAPI
+# 2. 创建 app = FastAPI()
+# 3. 加一个 GET /health 端点，返回 {"status": "ok"}
+#
+# 写完启动：
+# uvicorn main:app --reload --port 8000

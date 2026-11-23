@@ -2,6 +2,12 @@ from fastapi import FastAPI, HTTPException, status
 
 app = FastAPI()
 
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 DEPARTMENTS = {
     "D01": {"dept_code": "D01", "full_name": "一中队", "address": "一号楼"},
 }
