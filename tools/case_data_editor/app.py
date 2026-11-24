@@ -104,17 +104,19 @@ def render_editor() -> None:
             st.success("已生成 case_data.json")
     with c2:
         if st.button("检查引用", key="check_refs"):
-            hits = scan_aliases(ROOT)
+            hits = scan_aliases(ROOT, load_source(source_path))
             st.info(f"待同步引用 {len(hits)} 处")
             for h in hits[:20]:
                 st.caption(f"{h['file']}:{h['line']} {h['old']} → {h['new']}")
     with c3:
         confirmed = st.checkbox("我已确认变更清单", key="confirm_apply")
         if st.button("应用到全仓", key="apply_all", disabled=not confirmed):
-            changes = apply_changes(ROOT, yes=False)
+            # 以当前页面编辑的事实源为准扫描整仓
+            active_rules = load_source(source_path)
+            changes = apply_changes(ROOT, yes=False, source=active_rules)
             st.warning(f"将修改 {len(changes)} 个文件；请先在 CLI 用 diff 查看完整清单")
             if confirmed:
-                applied = apply_changes(ROOT, yes=True)
+                applied = apply_changes(ROOT, yes=True, source=active_rules)
                 st.success(f"已应用 {len(applied)} 个文件的修改")
 
 

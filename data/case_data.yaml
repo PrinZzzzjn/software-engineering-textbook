@@ -11,7 +11,7 @@ datasets:
             dept_code: D001
             full_name: 一中队
             address: 一号营区
-          aliases: [D01, 一号楼]
+          aliases: [D01, 一号楼, 一中队]
           used_in: [教材第3章起, 实训6-1起, 项目参考, 前端演示]
           sync: true
         - id: D002
@@ -19,7 +19,7 @@ datasets:
             dept_code: D002
             full_name: 二中队
             address: 二号营区
-          aliases: [D02, 二号楼]
+          aliases: [D02, 二号楼, 二中队]
           used_in: [教材第3章起, 实训6-1起, 项目参考, 前端演示]
           sync: true
       personnel:

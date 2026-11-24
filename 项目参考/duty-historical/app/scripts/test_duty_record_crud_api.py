@@ -218,7 +218,7 @@ class DutyRecordApiTester:
         
         # 尝试使用已存在的数据，而不是创建新数据
         # 从测试结果看到系统中已有数据，我们使用这些数据
-        existing_personnel_cert = "ZHANG001"  # 张伟
+        existing_personnel_cert = "ZHANG001"  # 张三
         existing_workstation_id = "WS001"  # 测试工位1
         
         # 计算值班时间（当前时间往前1天到当前时间）

@@ -23,12 +23,14 @@ def _load_case_data():
     from pathlib import Path
     candidates = [
         Path(__file__).resolve().parents[n] / "data" / "case_data.json"
-        for n in range(1, 9)
+        for n in range(1, 6)
     ]
     for candidate in candidates:
         if candidate.exists():
             return json.loads(candidate.read_text(encoding="utf-8"))
     return {}
+
+DATA = _load_case_data()
 # 建表前先导入所有模型，create_all 只识别已导入的模型
 Base.metadata.create_all(bind=engine)
 

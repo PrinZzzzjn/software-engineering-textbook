@@ -53,7 +53,7 @@ def test_create_personnel():
     
     # 测试数据（使用dept_code=1001）
     personnel_data = {
-        "name": "张伟",
+        "name": "张三",
         "certificate_number": "987654321",  # 使用新的工号
         "id_card_number": "112345699874453188",  # 使用新的身份证号
         "department_id": 1001,

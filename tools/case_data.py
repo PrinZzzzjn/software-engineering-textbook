@@ -85,33 +85,36 @@ def _mapping_rules(source: dict | None = None) -> list[dict]:
                 if item.get("sync") is not True:
                     continue
                 fields = item.get("fields", {})
-                pairs: list[tuple[str, str]] = []
+                canonical_field = {
+                    "departments": "dept_code",
+                    "personnel": "certificate_number",
+                    "workstations": "workstation_id",
+                }.get(entity_name)
                 for old in item.get("aliases", []) or []:
                     old_s = str(old)
-                    if entity_name == "departments":
-                        if old_s in {"D01", "D02"}:
-                            pairs.append((old_s, str(fields.get("dept_code", item["id"]))))
-                        elif old_s == "一号楼":
-                            pairs.append((old_s, str(fields.get("address", ""))))
-                        elif old_s == "二号楼":
-                            pairs.append((old_s, str(fields.get("address", ""))))
-                    elif entity_name == "personnel":
-                        if old_s in {"P01", "P02"}:
-                            pairs.append((old_s, str(fields.get("certificate_number", item["id"]))))
-                        elif old_s == "张三":
-                            pairs.append((old_s, str(fields.get("name", ""))))
-                        elif old_s == "班长":
-                            pairs.append((old_s, str(fields.get("rank", ""))))
-                    elif entity_name == "workstations" and old_s in {"W01", "W02"}:
-                        pairs.append((old_s, str(fields.get("workstation_id", item["id"]))))
-                for old, new in pairs:
-                    if old == new or not new:
-                        continue
-                    key = (old, new)
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    rules.append({"old": old, "new": new, "dataset": ds_name, "entity": entity_name})
+                    new = ""
+                    if canonical_field and re.fullmatch(r"[A-Z]\d+", old_s):
+                        new = str(fields.get(canonical_field, item["id"]))
+                    elif old_s in {"一号楼", "二号楼"}:
+                        new = str(fields.get("address", ""))
+                    elif old_s == "一中队" and entity_name == "departments":
+                        new = str(fields.get("full_name", ""))
+                    elif old_s == "二中队" and entity_name == "departments":
+                        new = str(fields.get("full_name", ""))
+                    elif old_s == "张三":
+                        new = str(fields.get("name", ""))
+                    elif old_s == "班长":
+                        new = str(fields.get("rank", ""))
+                    if new and new != old_s:
+                        key = (old_s, new)
+                        if key not in seen:
+                            seen.add(key)
+                            rules.append({
+                                "old": old_s,
+                                "new": new,
+                                "dataset": ds_name,
+                                "entity": entity_name,
+                            })
     return rules
 
 
@@ -130,6 +133,8 @@ def _iter_files(root: Path):
         except ValueError:
             continue
         if any(part in EXCLUDED_PARTS for part in rel.parts):
+            continue
+        if rel.parts[:2] == ("项目参考", "duty-historical"):
             continue
         if rel.parts and rel.parts[0] == "docs":
             continue
@@ -172,23 +177,27 @@ def apply_changes(root: Path | None = None, yes: bool = False, source: dict | No
     for h in hits:
         by_file.setdefault(h["file"], []).append(h)
     changes: list[dict] = []
+    rules = {(h["old"], h["new"]): _pattern(h["old"]) for h in hits}
     for rel, file_hits in by_file.items():
         path = base / rel
-        text = path.read_text(encoding="utf-8")
-        new_text = text
-        for h in sorted(file_hits, key=lambda x: len(x["old"]), reverse=True):
-            new_text = new_text.replace(h["old"], h["new"])
-        if new_text != text:
+        raw = path.read_bytes()
+        text = raw.decode("utf-8")
+        newline = "\r\n" if b"\r\n" in raw else "\n"
+        normalized = text.replace("\r\n", "\n")
+        new_text = normalized
+        for (old, new), pat in sorted(rules.items(), key=lambda item: len(item[0][0]), reverse=True):
+            new_text = pat.sub(new, new_text)
+        if new_text != normalized:
+            if yes:
+                path.write_bytes(new_text.replace("\n", newline).encode("utf-8"))
             changes.append({
                 "file": rel,
                 "old": ",".join(sorted({h["old"] for h in file_hits})),
                 "new": ",".join(sorted({h["new"] for h in file_hits})),
-                "old_text": text,
+                "old_text": normalized,
                 "new_text": new_text,
                 "hits": file_hits,
             })
-            if yes:
-                path.write_text(new_text, encoding="utf-8")
     return changes
 
 
