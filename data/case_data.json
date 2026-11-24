@@ -8,7 +8,7 @@
         "fields": {
           "dept_code": "D001",
           "full_name": "一中队",
-          "address": "一号营区"
+          "address": "人民路1号"
         },
         "aliases": [
           "D01",
@@ -28,7 +28,7 @@
         "fields": {
           "dept_code": "D002",
           "full_name": "二中队",
-          "address": "二号营区"
+          "address": "建设街2号"
         },
         "aliases": [
           "D02",
@@ -51,7 +51,7 @@
           "certificate_number": "P001",
           "name": "张伟",
           "dept_code": "D001",
-          "rank": "一级值班员"
+          "rank": "中士"
         },
         "aliases": [
           "P01",
@@ -71,7 +71,7 @@
           "certificate_number": "P002",
           "name": "李娜",
           "dept_code": "D002",
-          "rank": "二级值班员"
+          "rank": "下士"
         },
         "aliases": [
           "P02"

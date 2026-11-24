@@ -32,5 +32,5 @@ def test_aliases_and_sync_strategy_are_present():
     doc = yaml.safe_load(SRC.read_text(encoding="utf-8"))
     dept = doc["datasets"]["baseline"]["entities"]["departments"][0]
     assert "D01" in dept["aliases"]
-    assert dept["fields"]["address"] == "一号营区"
+    assert dept["fields"]["address"] == "人民路1号"
     assert dept["fields"]["full_name"] == "一中队"
