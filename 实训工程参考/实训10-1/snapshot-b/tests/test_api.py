@@ -75,7 +75,7 @@ def normal_headers(username="alice", password="secret123"):
     return auth(response.json()["access_token"])
 
 
-def create_department(headers, dept_code="D01", full_name="一中队", address="一号楼"):
+def create_department(headers, dept_code="D001", full_name="一中队", address="一号楼"):
     return client.post(
         "/departments",
         json={"dept_code": dept_code, "full_name": full_name, "address": address},
@@ -87,7 +87,7 @@ def create_personnel(
     headers,
     certificate_number="P01",
     name="张三",
-    dept_code="D01",
+    dept_code="D001",
     rank="班长",
 ):
     return client.post(
@@ -302,7 +302,7 @@ def test_department_write_requires_admin():
     normal = normal_headers()
     admin = admin_headers()
 
-    body = {"dept_code": "D01", "full_name": "一中队", "address": "一号楼"}
+    body = {"dept_code": "D001", "full_name": "一中队", "address": "一号楼"}
 
     assert client.post("/departments", json=body, headers=anonymous).status_code == 401
     assert client.post("/departments", json=body, headers=normal).status_code == 403
@@ -312,31 +312,31 @@ def test_department_write_requires_admin():
 
     assert (
         client.put(
-            "/departments/D01",
-            json={"dept_code": "D01", "full_name": "一中队（改）"},
+            "/departments/D001",
+            json={"dept_code": "D001", "full_name": "一中队（改）"},
             headers=anonymous,
         ).status_code
         == 401
     )
     assert (
         client.put(
-            "/departments/D01",
-            json={"dept_code": "D01", "full_name": "一中队（改）"},
+            "/departments/D001",
+            json={"dept_code": "D001", "full_name": "一中队（改）"},
             headers=normal,
         ).status_code
         == 403
     )
     updated = client.put(
-        "/departments/D01",
-        json={"dept_code": "D01", "full_name": "一中队（改）"},
+        "/departments/D001",
+        json={"dept_code": "D001", "full_name": "一中队（改）"},
         headers=admin,
     )
     assert updated.status_code == 200
     assert updated.json()["full_name"] == "一中队（改）"
 
-    assert client.delete("/departments/D01", headers=anonymous).status_code == 401
-    assert client.delete("/departments/D01", headers=normal).status_code == 403
-    assert client.delete("/departments/D01", headers=admin).status_code == 204
+    assert client.delete("/departments/D001", headers=anonymous).status_code == 401
+    assert client.delete("/departments/D001", headers=normal).status_code == 403
+    assert client.delete("/departments/D001", headers=admin).status_code == 204
 
 
 def test_department_read_remains_public():
@@ -344,12 +344,12 @@ def test_department_read_remains_public():
     assert create_department(admin).status_code == 201
 
     listed = client.get("/departments")
-    detail = client.get("/departments/D01")
+    detail = client.get("/departments/D001")
 
     assert listed.status_code == 200
     assert listed.json()["total"] == 1
     assert detail.status_code == 200
-    assert detail.json()["dept_code"] == "D01"
+    assert detail.json()["dept_code"] == "D001"
 
 
 # ---------- 权限回收：personnel 写操作 ----------
@@ -363,7 +363,7 @@ def test_personnel_write_requires_admin():
     body = {
         "certificate_number": "P01",
         "name": "张三",
-        "dept_code": "D01",
+        "dept_code": "D001",
         "rank": "班长",
     }
 
@@ -376,7 +376,7 @@ def test_personnel_write_requires_admin():
     update_body = {
         "certificate_number": "P01",
         "name": "张三（改）",
-        "dept_code": "D01",
+        "dept_code": "D001",
         "rank": "副班长",
     }
     assert client.put("/personnel/P01", json=update_body).status_code == 401
@@ -457,7 +457,7 @@ def test_register_ignores_client_supplied_role():
 
 def test_department_query_regression():
     admin = admin_headers()
-    for code, name in [("D01", "一中队"), ("D02", "二中队"), ("D03", "三中队")]:
+    for code, name in [("D001", "一中队"), ("D002", "二中队"), ("D03", "三中队")]:
         assert create_department(admin, code, name).status_code == 201
 
     first_page = client.get("/departments", params={"page": 1, "page_size": 2})
@@ -467,27 +467,27 @@ def test_department_query_regression():
 
     assert first_page.status_code == 200
     assert [item["dept_code"] for item in first_page.json()["items"]] == [
-        "D01",
-        "D02",
+        "D001",
+        "D002",
     ]
     assert first_page.json()["total"] == 3
     assert [item["dept_code"] for item in second_page.json()["items"]] == ["D03"]
     assert filtered.json()["total"] == 1
-    assert filtered.json()["items"][0]["dept_code"] == "D02"
+    assert filtered.json()["items"][0]["dept_code"] == "D002"
     assert blank.json()["total"] == 3
     assert client.get("/departments", params={"page": 0}).status_code == 422
 
 
 def test_personnel_query_regression():
     admin = admin_headers()
-    assert create_department(admin, "D01", "一中队").status_code == 201
-    assert create_department(admin, "D02", "二中队").status_code == 201
-    assert create_personnel(admin, "P01", "张三", "D01").status_code == 201
-    assert create_personnel(admin, "P02", "李四", "D01").status_code == 201
-    assert create_personnel(admin, "P03", "张三丰", "D02").status_code == 201
+    assert create_department(admin, "D001", "一中队").status_code == 201
+    assert create_department(admin, "D002", "二中队").status_code == 201
+    assert create_personnel(admin, "P01", "张三", "D001").status_code == 201
+    assert create_personnel(admin, "P02", "李四", "D001").status_code == 201
+    assert create_personnel(admin, "P03", "张三丰", "D002").status_code == 201
 
     name_hit = client.get("/personnel", params={"name": "张"})
-    dept_hit = client.get("/personnel", params={"dept_code": "D01"})
+    dept_hit = client.get("/personnel", params={"dept_code": "D001"})
     paged = client.get("/personnel", params={"page": 2, "page_size": 2})
 
     assert name_hit.status_code == 200

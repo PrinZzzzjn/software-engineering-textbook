@@ -15,6 +15,22 @@ from app.modules.personnel import controller as personnel_controller
 from app.modules.user import controller as user_controller
 from app.modules.workstation import controller as workstation_controller
 
+
+
+def _load_case_data():
+    """读取仓库统一案例数据；找不到时回落到本文件内置常量。"""
+    import json
+    from pathlib import Path
+    candidates = [
+        Path(__file__).resolve().parents[n] / "data" / "case_data.json"
+        for n in range(1, 6)
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return json.loads(candidate.read_text(encoding="utf-8"))
+    return {}
+
+DATA = _load_case_data()
 # 建表前先导入所有模型，create_all 只识别已导入的模型
 Base.metadata.create_all(bind=engine)
 

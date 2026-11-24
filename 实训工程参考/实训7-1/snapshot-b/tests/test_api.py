@@ -39,7 +39,7 @@ def cleanup_temp_database():
     shutil.rmtree(TEST_DB_DIR, ignore_errors=True)
 
 
-def create_department(dept_code="D01", full_name="一中队", address="一号楼"):
+def create_department(dept_code="D001", full_name="一中队", address="一号楼"):
     return client.post(
         "/departments",
         json={"dept_code": dept_code, "full_name": full_name, "address": address},
@@ -65,12 +65,12 @@ def test_create_and_get_department():
 
     assert created.status_code == 201
     assert created.json() == {
-        "dept_code": "D01",
+        "dept_code": "D001",
         "full_name": "一中队",
         "address": "一号楼",
     }
 
-    response = client.get("/departments/D01")
+    response = client.get("/departments/D001")
     assert response.status_code == 200
     assert response.json() == created.json()
 
@@ -100,13 +100,13 @@ def test_update_department():
     create_department()
 
     response = client.put(
-        "/departments/D01",
-        json={"dept_code": "D01", "full_name": "第一中队", "address": "二号楼"},
+        "/departments/D001",
+        json={"dept_code": "D001", "full_name": "第一中队", "address": "二号楼"},
     )
 
     assert response.status_code == 200
     assert response.json() == {
-        "dept_code": "D01",
+        "dept_code": "D001",
         "full_name": "第一中队",
         "address": "二号楼",
     }
@@ -115,18 +115,18 @@ def test_update_department():
 def test_delete_returns_204_without_body_and_second_delete_404():
     create_department()
 
-    response = client.delete("/departments/D01")
+    response = client.delete("/departments/D001")
 
     assert response.status_code == 204
     assert response.content == b""
-    assert client.get("/departments/D01").status_code == 404
-    assert client.delete("/departments/D01").status_code == 404
+    assert client.get("/departments/D001").status_code == 404
+    assert client.delete("/departments/D001").status_code == 404
 
 
 def test_invalid_payload_returns_422():
-    missing_name = client.post("/departments", json={"dept_code": "D01"})
+    missing_name = client.post("/departments", json={"dept_code": "D001"})
     empty_code = create_department(dept_code="")
-    too_long_name = create_department(dept_code="D02", full_name="单" * 101)
+    too_long_name = create_department(dept_code="D002", full_name="单" * 101)
     too_long_address = create_department(
         dept_code="D03", full_name="三中队", address="地" * 501
     )
@@ -151,8 +151,8 @@ def test_pagination_returns_requested_slice_and_total():
 
     assert first_page.status_code == 200
     assert [item["dept_code"] for item in first_page.json()["items"]] == [
-        "D01",
-        "D02",
+        "D001",
+        "D002",
     ]
     assert first_page.json()["total"] == 3
     assert [item["dept_code"] for item in second_page.json()["items"]] == ["D03"]

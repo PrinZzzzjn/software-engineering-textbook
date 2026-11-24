@@ -18,28 +18,28 @@ def test_department_crud():
     # 新增
     r = client.post(
         "/departments",
-        json={"dept_code": "D01", "full_name": "一中队", "address": "一号营区"},
+        json={"dept_code": "D001", "full_name": "一中队", "address": "一号营区"},
     )
     assert r.status_code == 201
 
     # 重复
     r = client.post(
         "/departments",
-        json={"dept_code": "D01", "full_name": "一中队"},
+        json={"dept_code": "D001", "full_name": "一中队"},
     )
     assert r.status_code == 400
 
     # 详情
-    r = client.get("/departments/D01")
+    r = client.get("/departments/D001")
     assert r.status_code == 200
-    assert r.json()["dept_code"] == "D01"
+    assert r.json()["dept_code"] == "D001"
 
     # 不存在的编码
     r = client.get("/departments/D404")
     assert r.status_code == 404
 
     # 删除
-    r = client.delete("/departments/D01")
+    r = client.delete("/departments/D001")
     assert r.status_code == 204
 
 

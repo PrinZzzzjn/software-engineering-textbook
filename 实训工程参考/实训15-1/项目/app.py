@@ -7,25 +7,48 @@
 字段与接口契约一致：dept_code / full_name / address。
 """
 
+
+def _load_case_data():
+    """读取仓库统一案例数据；找不到时回落到本文件内置常量。"""
+    import json
+    from pathlib import Path
+    candidates = [
+        Path(__file__).resolve().parents[n] / "data" / "case_data.json"
+        for n in range(1, 6)
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return json.loads(candidate.read_text(encoding="utf-8"))
+    return {}
+
+
+def _seed_rows(entities, keys, fallback):
+    """从统一数据实体中取字段；数据缺失时用已同步的字面量。"""
+    rows = []
+    for entity in entities:
+        fields = entity.get("fields", {})
+        values = tuple(fields.get(key) for key in keys)
+        if not any(value not in (None, "") for value in values):
+            continue
+        rows.append(
+            dict(zip(keys, values)) if isinstance(fallback, dict)
+            else values
+        )
+    return rows or fallback
+
+
 import pandas as pd
 import streamlit as st
 
+DATA = _load_case_data()
+
 st.set_page_config(page_title="单位管理", page_icon="🏢", layout="wide")
 
-SEED_DEPARTMENTS = [
-    {"dept_code": "D001", "full_name": "一中队", "address": "一号营区"},
-    {"dept_code": "D002", "full_name": "二中队", "address": "二号营区"},
-    {"dept_code": "D003", "full_name": "三中队", "address": "三号营区"},
-    {"dept_code": "D004", "full_name": "四中队", "address": "四号营区"},
-    {"dept_code": "D005", "full_name": "五中队", "address": "五号营区"},
-    {"dept_code": "D006", "full_name": "勤务保障中队", "address": "综合楼 201"},
-    {"dept_code": "D007", "full_name": "通信保障中队", "address": "通信楼 101"},
-    {"dept_code": "D008", "full_name": "卫生队", "address": "医务楼"},
-    {"dept_code": "D009", "full_name": "运输保障中队", "address": "车库楼"},
-    {"dept_code": "D010", "full_name": "警戒分队", "address": "门岗楼"},
-    {"dept_code": "D011", "full_name": "教导队", "address": "教学楼"},
-    {"dept_code": "D012", "full_name": "装备保障中队", "address": ""},
-]
+SEED_DEPARTMENTS = _seed_rows(
+    DATA.get("frontend_demo", {}).get("departments", []),
+    ("dept_code", "full_name", "address"),
+    {},
+)
 
 
 def _init_state() -> None:

@@ -79,7 +79,7 @@ def normal_headers(username="alice", password="secret123"):
     return auth(response.json()["access_token"])
 
 
-def create_department(headers, dept_code="D01", full_name="一中队", address="一号楼"):
+def create_department(headers, dept_code="D001", full_name="一中队", address="一号楼"):
     return client.post(
         "/departments",
         json={"dept_code": dept_code, "full_name": full_name, "address": address},
@@ -91,7 +91,7 @@ def create_personnel(
     headers,
     certificate_number="P01",
     name="张三",
-    dept_code="D01",
+    dept_code="D001",
     rank="班长",
 ):
     return client.post(
@@ -110,7 +110,7 @@ def create_workstation(
     headers,
     workstation_id="W01",
     name="一号哨位",
-    dept_code="D01",
+    dept_code="D001",
     is_active=1,
 ):
     return client.post(
@@ -146,7 +146,7 @@ def create_record(
     )
 
 
-def prepare_person_and_workstation(admin, dept_code="D01"):
+def prepare_person_and_workstation(admin, dept_code="D001"):
     """建好一条记录所需的最小参照数据。"""
     assert create_department(admin, dept_code, "一中队").status_code == 201
     assert create_personnel(admin, "P01", "张三", dept_code).status_code == 201
@@ -167,12 +167,12 @@ def test_workstation_crud_public_read():
     admin = admin_headers()
     assert create_department(admin).status_code == 201
 
-    created = create_workstation(admin, "W01", "一号哨位", "D01", 1)
+    created = create_workstation(admin, "W01", "一号哨位", "D001", 1)
     assert created.status_code == 201
     assert created.json() == {
         "workstation_id": "W01",
         "name": "一号哨位",
-        "dept_code": "D01",
+        "dept_code": "D001",
         "is_active": 1,
     }
 
@@ -190,7 +190,7 @@ def test_workstation_crud_public_read():
         json={
             "workstation_id": "W01",
             "name": "一号哨位（改）",
-            "dept_code": "D01",
+            "dept_code": "D001",
             "is_active": 0,
         },
         headers=admin,
@@ -229,14 +229,14 @@ def test_workstation_invalid_is_active_returns_422(is_active):
 
 def test_workstation_list_pagination_and_filter():
     admin = admin_headers()
-    assert create_department(admin, "D01", "一中队").status_code == 201
-    assert create_department(admin, "D02", "二中队").status_code == 201
-    for wid, dept in [("W01", "D01"), ("W02", "D01"), ("W03", "D02")]:
+    assert create_department(admin, "D001", "一中队").status_code == 201
+    assert create_department(admin, "D002", "二中队").status_code == 201
+    for wid, dept in [("W01", "D001"), ("W02", "D001"), ("W03", "D002")]:
         assert create_workstation(admin, wid, wid, dept).status_code == 201
 
     first_page = client.get("/workstations", params={"page": 1, "page_size": 2})
     second_page = client.get("/workstations", params={"page": 2, "page_size": 2})
-    filtered = client.get("/workstations", params={"dept_code": "D01"})
+    filtered = client.get("/workstations", params={"dept_code": "D001"})
 
     assert [i["workstation_id"] for i in first_page.json()["items"]] == ["W01", "W02"]
     assert first_page.json()["total"] == 3
@@ -252,7 +252,7 @@ def test_workstation_write_requires_admin():
     body = {
         "workstation_id": "W01",
         "name": "一号哨位",
-        "dept_code": "D01",
+        "dept_code": "D001",
         "is_active": 1,
     }
 
@@ -413,7 +413,7 @@ def test_rule_overlap_boundaries(start_time, end_time, expected_status, expected
 def test_rule_overlap_is_scoped_to_same_workstation():
     admin = admin_headers()
     prepare_person_and_workstation(admin)
-    assert create_workstation(admin, "W02", "二号哨位", "D01").status_code == 201
+    assert create_workstation(admin, "W02", "二号哨位", "D001").status_code == 201
     assert create_record(admin).status_code == 201
 
     other_workstation = create_record(admin, workstation_id="W02")
@@ -511,13 +511,13 @@ def test_users_permission_matrix_regression():
 def test_department_write_requires_admin_regression():
     normal = normal_headers()
     admin = admin_headers()
-    body = {"dept_code": "D01", "full_name": "一中队", "address": "一号楼"}
+    body = {"dept_code": "D001", "full_name": "一中队", "address": "一号楼"}
 
     assert client.post("/departments", json=body).status_code == 401
     assert client.post("/departments", json=body, headers=normal).status_code == 403
     assert create_department(admin).status_code == 201
-    assert client.put("/departments/D01", json=body, headers=normal).status_code == 403
-    assert client.delete("/departments/D01", headers=admin).status_code == 204
+    assert client.put("/departments/D001", json=body, headers=normal).status_code == 403
+    assert client.delete("/departments/D001", headers=admin).status_code == 204
 
 
 def test_register_login_me_regression():

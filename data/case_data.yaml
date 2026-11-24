@@ -1,0 +1,380 @@
+version: 1
+updated: 2026-11-24
+description: 执勤电子年鉴案例数据事实源。旧编号（D01/P01/W01）统一视为基线编号的别名，不再作为可保留的教学差异。
+datasets:
+  baseline:
+    description: 正式种子数据，教材与实训运行时的统一取值
+    entities:
+      departments:
+      - id: D001
+        fields:
+          dept_code: D001
+          full_name: 一中队
+          address: 人民路1号
+        aliases:
+        - D01
+        - 一号楼
+        - 一中队
+        used_in:
+        - 教材第3章起
+        - 实训6-1起
+        - 项目参考
+        - 前端演示
+        sync: true
+      - id: D002
+        fields:
+          dept_code: D002
+          full_name: 二中队
+          address: 建设街2号
+        aliases:
+        - D02
+        - 二号楼
+        - 二中队
+        used_in:
+        - 教材第3章起
+        - 实训6-1起
+        - 项目参考
+        - 前端演示
+        sync: true
+      personnel:
+      - id: P001
+        fields:
+          certificate_number: P001
+          name: 张伟
+          dept_code: D001
+          rank: 中士
+        aliases:
+        - P01
+        - 张三
+        - 班长
+        used_in:
+        - 教材第12章
+        - 实训7-1起
+        - 项目参考
+        sync: true
+      - id: P002
+        fields:
+          certificate_number: P002
+          name: 李娜
+          dept_code: D002
+          rank: 下士
+        aliases:
+        - P02
+        used_in:
+        - 实训7-1起
+        - 项目参考
+        sync: true
+      workstations:
+      - id: W001
+        fields:
+          workstation_id: W001
+          name: 一号哨位
+          dept_code: D001
+          is_active: 1
+        aliases:
+        - W01
+        used_in:
+        - 教材第12章
+        - 实训10-1起
+        - 项目参考
+        sync: true
+      - id: W002
+        fields:
+          workstation_id: W002
+          name: 二号哨位
+          dept_code: D002
+          is_active: 1
+        aliases:
+        - W02
+        used_in:
+        - 实训10-1起
+        - 项目参考
+        sync: true
+      duty_records:
+      - id: duty_001
+        fields:
+          personnel_certificate_number: P001
+          workstation_id: W001
+          start_time: '2026-03-02 08:00:00'
+          end_time: '2026-03-02 12:00:00'
+          status: normal
+        aliases: []
+        used_in:
+        - 实训10-1起
+        - 项目参考
+        sync: true
+      - id: duty_002
+        fields:
+          personnel_certificate_number: P001
+          workstation_id: W001
+          start_time: '2026-03-02 13:00:00'
+          end_time: '2026-03-02 17:00:00'
+          status: normal
+        aliases: []
+        used_in:
+        - 实训10-1起
+        - 项目参考
+        sync: true
+      - id: duty_003
+        fields:
+          personnel_certificate_number: P001
+          workstation_id: W001
+          start_time: '2026-04-10 08:00:00'
+          end_time: '2026-04-10 16:00:00'
+          status: normal
+        aliases: []
+        used_in:
+        - 实训10-1起
+        - 项目参考
+        sync: true
+      - id: duty_004
+        fields:
+          personnel_certificate_number: P002
+          workstation_id: W002
+          start_time: '2026-03-02 08:00:00'
+          end_time: '2026-03-02 12:00:00'
+          status: normal
+        aliases: []
+        used_in:
+        - 实训10-1起
+        - 项目参考
+        sync: true
+      users:
+      - id: admin
+        fields:
+          username: admin
+          password: admin123
+          role: admin
+          is_active: 1
+        aliases: []
+        used_in:
+        - 教材第9章起
+        - 实训8-1起
+        - 前端演示
+        sync: true
+  teaching_simplified:
+    description: 旧教学简化写法的登记；值同步到基线，但保留作为替换来源与历史说明
+    entities:
+      legacy_mappings:
+      - id: dept_code_D01
+        fields:
+          old: D01
+          new: D001
+          old_name: 一中队
+          old_address: 一号楼
+        aliases:
+        - D01
+        - 一号楼
+        used_in:
+        - 教材第3-5章
+        - 实训3-1
+        - 实训4-1
+        sync: true
+      - id: personnel_P01
+        fields:
+          old: P01
+          new: P001
+          old_name: 张三
+          old_rank: 班长
+        aliases:
+        - P01
+        - 张三
+        - 班长
+        used_in:
+        - 接口测试默认值
+        sync: true
+      - id: workstation_W01
+        fields:
+          old: W01
+          new: W001
+        aliases:
+        - W01
+        used_in:
+        - 教材第15章
+        - 参考答案
+        - 接口测试默认值
+        sync: true
+  verification:
+    description: 测试与临时数据；不进正式 seed
+    entities:
+      users:
+      - id: alice
+        fields:
+          username: alice
+          password: secret123
+          role: normal
+          is_active: 1
+        aliases: []
+        used_in:
+        - 教材第8章
+        - tests/test_api.py
+        sync: false
+      not_found_examples:
+      - id: D404
+        fields:
+          dept_code: D404
+        aliases:
+        - D99
+        used_in:
+        - 404验证
+        sync: false
+      frontend_new_example:
+      - id: D013
+        fields:
+          dept_code: D013
+          full_name: 试点分队
+          address: 试点营区
+        aliases: []
+        used_in:
+        - 实训15-1 verify_app.py
+        sync: false
+      samples:
+      - id: hand_calc_sample_1
+        fields:
+          description: 第11章例11-1的5条手算记录
+          expected_days: 5
+          expected_hours: 16
+        aliases: []
+        used_in:
+        - 教材第11章
+        sync: false
+      - id: rule_sample_overlap
+        fields:
+          description: 第10章08:00-12:00基准记录与冲突判断
+        aliases: []
+        used_in:
+        - 教材第10章
+        sync: false
+      - id: test_random_day
+        fields:
+          description: 第12章按当前日期加随机1000-2000天的边界测试
+        aliases: []
+        used_in:
+        - 教材第12章
+        sync: false
+  frontend_demo:
+    description: 15-1 前端假数据，16-1 起停用；D001/D002 与 baseline 一致
+    entities:
+      departments:
+      - id: D001
+        fields:
+          dept_code: D001
+          full_name: 一中队
+          address: 一号营区
+        aliases:
+        - D01
+        used_in:
+        - 实训15-1
+        - 实训16-1 starter
+        sync: true
+      - id: D002
+        fields:
+          dept_code: D002
+          full_name: 二中队
+          address: 二号营区
+        aliases:
+        - D02
+        used_in:
+        - 实训15-1
+        - 实训16-1 starter
+        sync: true
+      - id: D003
+        fields:
+          dept_code: D003
+          full_name: 三中队
+          address: 三号营区
+        aliases: []
+        used_in:
+        - 实训15-1
+        only_in: 实训15-1
+        sync: false
+      - id: D004
+        fields:
+          dept_code: D004
+          full_name: 四中队
+          address: 四号营区
+        aliases: []
+        used_in:
+        - 实训15-1
+        only_in: 实训15-1
+        sync: false
+      - id: D005
+        fields:
+          dept_code: D005
+          full_name: 五中队
+          address: 五号营区
+        aliases: []
+        used_in:
+        - 实训15-1
+        only_in: 实训15-1
+        sync: false
+      - id: D006
+        fields:
+          dept_code: D006
+          full_name: 勤务保障中队
+          address: 综合楼 201
+        aliases: []
+        used_in:
+        - 实训15-1
+        only_in: 实训15-1
+        sync: false
+      - id: D007
+        fields:
+          dept_code: D007
+          full_name: 通信保障中队
+          address: 通信楼 101
+        aliases: []
+        used_in:
+        - 实训15-1
+        only_in: 实训15-1
+        sync: false
+      - id: D008
+        fields:
+          dept_code: D008
+          full_name: 卫生队
+          address: 医务楼
+        aliases: []
+        used_in:
+        - 实训15-1
+        only_in: 实训15-1
+        sync: false
+      - id: D009
+        fields:
+          dept_code: D009
+          full_name: 运输保障中队
+          address: 车库楼
+        aliases: []
+        used_in:
+        - 实训15-1
+        only_in: 实训15-1
+        sync: false
+      - id: D010
+        fields:
+          dept_code: D010
+          full_name: 警戒分队
+          address: 门岗楼
+        aliases: []
+        used_in:
+        - 实训15-1
+        only_in: 实训15-1
+        sync: false
+      - id: D011
+        fields:
+          dept_code: D011
+          full_name: 教导队
+          address: 教学楼
+        aliases: []
+        used_in:
+        - 实训15-1
+        only_in: 实训15-1
+        sync: false
+      - id: D012
+        fields:
+          dept_code: D012
+          full_name: 装备保障中队
+          address: ''
+        aliases: []
+        used_in:
+        - 实训15-1
+        only_in: 实训15-1
+        sync: false

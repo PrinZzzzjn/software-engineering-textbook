@@ -9,6 +9,37 @@ from app.modules.user import controller as user_controller
 from app.modules.user import model as user_model  # noqa: F401  建表前先导入模型
 from app.modules.user import service as user_service
 
+
+
+def _load_case_data():
+    """读取仓库统一案例数据；找不到时回落到本文件内置常量。"""
+    import json
+    from pathlib import Path
+    candidates = [
+        Path(__file__).resolve().parents[n] / "data" / "case_data.json"
+        for n in range(1, 6)
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return json.loads(candidate.read_text(encoding="utf-8"))
+    return {}
+
+
+def _seed_rows(entities, keys, fallback):
+    """从统一数据实体中取字段；数据缺失时用已同步的字面量。"""
+    rows = []
+    for entity in entities:
+        fields = entity.get("fields", {})
+        values = tuple(fields.get(key) for key in keys)
+        if not all(value not in (None, "") for value in values):
+            continue
+        rows.append(
+            dict(zip(keys, values)) if isinstance(fallback, dict)
+            else values
+        )
+    return rows or fallback
+
+DATA = _load_case_data()
 app = FastAPI(title="Duty API", version="0.1.0")
 
 
@@ -29,10 +60,11 @@ def _seed_departments() -> None:
     """写入两个教学演示单位；逐条先查存在性，重复启动不会重复写入。"""
     db = SessionLocal()
     try:
-        for code, name, address in [
-            ("D001", "一中队", "一号营区"),
-            ("D002", "二中队", "二号营区"),
-        ]:
+        for code, name, address in _seed_rows(
+            DATA.get("baseline", {}).get("departments", []),
+            ("dept_code", "full_name", "address"),
+            [("D001", "一中队", "一号营区"), ("D002", "二中队", "二号营区")],
+        ):
             exists = (
                 db.query(department_model.Department)
                 .filter(department_model.Department.dept_code == code)
@@ -53,10 +85,11 @@ def _seed_personnel() -> None:
     """写入两个教学演示人员；所属单位由 _seed_departments 先写入。"""
     db = SessionLocal()
     try:
-        for number, name, dept_code, rank in [
-            ("P001", "张伟", "D001", "一级值班员"),
-            ("P002", "李娜", "D002", "二级值班员"),
-        ]:
+        for number, name, dept_code, rank in _seed_rows(
+            DATA.get("baseline", {}).get("personnel", []),
+            ("certificate_number", "name", "dept_code", "rank"),
+            [("P001", "张伟", "D001", "一级值班员"), ("P002", "李娜", "D002", "二级值班员")],
+        ):
             exists = (
                 db.query(personnel_model.Personnel)
                 .filter(personnel_model.Personnel.certificate_number == number)
