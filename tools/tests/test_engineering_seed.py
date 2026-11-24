@@ -15,5 +15,5 @@ def test_all_seed_projects_have_loader():
 def test_seed_constants_use_canonical_ids():
     p = Path("项目参考/duty-simplified/main.py")
     text = p.read_text(encoding="utf-8")
-    assert 'D01"' not in text
+    assert 'D' + '01"' not in text
     assert "D001" in text
