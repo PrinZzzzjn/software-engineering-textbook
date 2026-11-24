@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime as _datetime
 import json
 import re
 import sys
@@ -27,6 +28,12 @@ EXCLUDED_PARTS = {
     ".pytest_cache", "offline-deps",
 }
 SCAN_SUFFIXES = {".py", ".md", ".txt", ".json"}
+
+
+def _json_default(value):
+    if isinstance(value, (_datetime.date, _datetime.datetime)):
+        return value.isoformat(sep=" ") if isinstance(value, _datetime.datetime) else value.isoformat()
+    return str(value)
 
 
 def load_source(path: Path | None = None) -> dict:
@@ -59,7 +66,10 @@ def build_json(source: dict | None = None, output: Path | None = None) -> dict:
     }
     dst = Path(output) if output else DEFAULT_OUTPUT
     dst.parent.mkdir(parents=True, exist_ok=True)
-    dst.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    dst.write_text(
+        json.dumps(out, ensure_ascii=False, indent=2, default=_json_default) + "\n",
+        encoding="utf-8",
+    )
     return out
 
 
