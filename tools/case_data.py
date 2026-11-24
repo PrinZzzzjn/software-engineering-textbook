@@ -25,7 +25,7 @@ DEFAULT_SOURCE = ROOT / "data" / "case_data.yaml"
 DEFAULT_OUTPUT = ROOT / "data" / "case_data.json"
 EXCLUDED_PARTS = {
     ".git", "venv", ".venv", "__pycache__", "build", "node_modules",
-    ".pytest_cache", "offline-deps",
+    ".pytest_cache", "offline-deps", ".superpowers",
 }
 SCAN_SUFFIXES = {".py", ".md", ".txt", ".json"}
 
@@ -135,6 +135,10 @@ def _iter_files(root: Path):
             continue
         if rel.as_posix() == "data/case_data.json":
             continue
+        if rel.as_posix() == "tools/case_data.py":
+            continue
+        if rel.parts and rel.parts[0] == "tools" and rel.name.startswith("test_case_data_"):
+            continue
         yield p, rel
 
 
@@ -194,13 +198,18 @@ def check_report(root: Path | None = None) -> dict:
     history: list[dict] = []
     docs = base / "docs"
     if docs.exists():
-        for path, rel in _iter_files(base):
-            if rel.parts and rel.parts[0] != "docs":
+        rules = _mapping_rules()
+        for path in docs.rglob("*"):
+            if not path.is_file() or path.suffix not in SCAN_SUFFIXES:
                 continue
             text = path.read_text(encoding="utf-8", errors="ignore")
-            for rule in _mapping_rules():
-                if rule["old"] in text:
-                    history.append({"area": "docs", "file": rel.as_posix(), "old": rule["old"]})
+            for rule in rules:
+                if re.search(rf"(?<![A-Za-z0-9_]){re.escape(rule['old'])}", text):
+                    history.append({
+                        "area": "docs",
+                        "file": path.relative_to(base).as_posix(),
+                        "old": rule["old"],
+                    })
                     break
     return {"active_unmatched": hits, "history": history}
 

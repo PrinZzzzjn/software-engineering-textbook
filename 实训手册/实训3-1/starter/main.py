@@ -3,7 +3,7 @@ from fastapi import FastAPI
 app = FastAPI()
 
 DEPARTMENTS = {
-    "D01": {"dept_code": "D01", "full_name": "一中队", "address": "一号楼"},
+    "D001": {"dept_code": "D001", "full_name": "一中队", "address": "一号营区"},
 }
 
 

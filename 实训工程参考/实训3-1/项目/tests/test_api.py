@@ -15,10 +15,10 @@ def client():
     DEPARTMENTS.clear()
     DEPARTMENTS.update(
         {
-            "D01": {
-                "dept_code": "D01",
+            "D001": {
+                "dept_code": "D001",
                 "full_name": "一中队",
-                "address": "一号楼",
+                "address": "一号营区",
             }
         }
     )
@@ -33,18 +33,18 @@ def test_list_departments_returns_items_and_total(client):
     body = response.json()
     assert body["total"] == 1
     assert body["items"] == [
-        {"dept_code": "D01", "full_name": "一中队", "address": "一号楼"}
+        {"dept_code": "D001", "full_name": "一中队", "address": "一号营区"}
     ]
 
 
 def test_get_department_returns_200(client):
-    response = client.get("/departments/D01")
+    response = client.get("/departments/D001")
 
     assert response.status_code == 200
     assert response.json() == {
-        "dept_code": "D01",
+        "dept_code": "D001",
         "full_name": "一中队",
-        "address": "一号楼",
+        "address": "一号营区",
     }
 
 
@@ -58,21 +58,21 @@ def test_get_missing_department_returns_404(client):
 def test_create_department_returns_201(client):
     response = client.post(
         "/departments",
-        json={"dept_code": "D02", "full_name": "二中队", "address": "二号楼"},
+        json={"dept_code": "D002", "full_name": "二中队", "address": "二号营区"},
     )
 
     assert response.status_code == 201
     assert response.json() == {
-        "dept_code": "D02",
+        "dept_code": "D002",
         "full_name": "二中队",
-        "address": "二号楼",
+        "address": "二号营区",
     }
 
 
 def test_create_duplicate_department_returns_400(client):
     response = client.post(
         "/departments",
-        json={"dept_code": "D01", "full_name": "重复单位"},
+        json={"dept_code": "D001", "full_name": "重复单位"},
     )
 
     assert response.status_code == 400
@@ -80,20 +80,20 @@ def test_create_duplicate_department_returns_400(client):
 
 
 def test_create_department_without_required_field_returns_400(client):
-    response = client.post("/departments", json={"dept_code": "D02"})
+    response = client.post("/departments", json={"dept_code": "D002"})
 
     assert response.status_code == 400
     assert response.json() == {"detail": "缺少必填字段"}
 
 
 def test_update_department_returns_200(client):
-    response = client.put("/departments/D01", json={"full_name": "一中队（改）"})
+    response = client.put("/departments/D001", json={"full_name": "一中队（改）"})
 
     assert response.status_code == 200
     assert response.json() == {
-        "dept_code": "D01",
+        "dept_code": "D001",
         "full_name": "一中队（改）",
-        "address": "一号楼",
+        "address": "一号营区",
     }
 
 
@@ -105,16 +105,16 @@ def test_update_missing_department_returns_404(client):
 
 
 def test_delete_department_returns_204_without_body(client):
-    response = client.delete("/departments/D01")
+    response = client.delete("/departments/D001")
 
     assert response.status_code == 204
     assert response.content == b""
-    assert "D01" not in DEPARTMENTS
+    assert "D001" not in DEPARTMENTS
 
 
 def test_delete_department_twice_returns_404(client):
-    first_response = client.delete("/departments/D01")
-    second_response = client.delete("/departments/D01")
+    first_response = client.delete("/departments/D001")
+    second_response = client.delete("/departments/D001")
 
     assert first_response.status_code == 204
     assert second_response.status_code == 404

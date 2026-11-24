@@ -180,7 +180,7 @@ def main():
         workstations = [workstation1, workstation2]
         
         # 3. 创建人员
-        zhang_san = get_or_create_personnel(db, "张三", "ZHANG001", "110101199001010001", dept.dept_code)
+        zhang_san = get_or_create_personnel(db, "张伟", "ZHANG001", "110101199001010001", dept.dept_code)
         li_si = get_or_create_personnel(db, "李四", "LI001", "110101199002020002", dept.dept_code)
         personnel = [zhang_san, li_si]
         

@@ -20,7 +20,7 @@ def clear_table():
     model.TABLE.clear()
 
 
-def create_department(dept_code="D01", full_name="一中队", address="一号楼"):
+def create_department(dept_code="D001", full_name="一中队", address="一号营区"):
     return client.post(
         "/departments",
         json={"dept_code": dept_code, "full_name": full_name, "address": address},
@@ -46,12 +46,12 @@ def test_create_and_get_department():
 
     assert created.status_code == 201
     assert created.json() == {
-        "dept_code": "D01",
+        "dept_code": "D001",
         "full_name": "一中队",
-        "address": "一号楼",
+        "address": "一号营区",
     }
 
-    response = client.get("/departments/D01")
+    response = client.get("/departments/D001")
     assert response.status_code == 200
     assert response.json() == created.json()
 
@@ -60,25 +60,25 @@ def test_update_department():
     create_department()
 
     response = client.put(
-        "/departments/D01", json={"full_name": "第一中队", "address": "二号楼"}
+        "/departments/D001", json={"full_name": "第一中队", "address": "二号营区"}
     )
 
     assert response.status_code == 200
     assert response.json() == {
-        "dept_code": "D01",
+        "dept_code": "D001",
         "full_name": "第一中队",
-        "address": "二号楼",
+        "address": "二号营区",
     }
 
 
 def test_delete_department_returns_204_without_body():
     create_department()
 
-    response = client.delete("/departments/D01")
+    response = client.delete("/departments/D001")
 
     assert response.status_code == 204
     assert response.content == b""
-    assert client.get("/departments/D01").status_code == 404
+    assert client.get("/departments/D001").status_code == 404
 
 
 def test_duplicate_department_returns_400():
@@ -100,7 +100,7 @@ def test_missing_department_returns_404():
 
 
 def test_invalid_payload_returns_422():
-    missing_name = client.post("/departments", json={"dept_code": "D01"})
+    missing_name = client.post("/departments", json={"dept_code": "D001"})
     short_code = create_department(dept_code="D")
 
     assert missing_name.status_code == 422
@@ -121,8 +121,8 @@ def test_pagination_returns_requested_slice_and_total():
 
     assert first_page.status_code == 200
     assert [item["dept_code"] for item in first_page.json()["items"]] == [
-        "D01",
-        "D02",
+        "D001",
+        "D002",
     ]
     assert first_page.json()["total"] == 3
     assert [item["dept_code"] for item in second_page.json()["items"]] == ["D03"]

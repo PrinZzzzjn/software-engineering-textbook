@@ -1376,7 +1376,7 @@ Authorization: Bearer <access_token>
       "id": 1,
       "duty_record_id": 100,
       "inspector_certificate_number": "P001",
-      "inspector_name": "张三",
+      "inspector_name": "张伟",
       "start_time": "2024-01-01T10:00:00Z",
       "end_time": "2024-01-01T10:15:00Z",
       "inspection_type": "ONLINE",
@@ -1426,7 +1426,7 @@ Content-Type: application/json
   "id": 1,
   "duty_record_id": 100,
   "inspector_certificate_number": "P001",
-  "inspector_name": "张三",
+  "inspector_name": "张伟",
   "start_time": "2024-01-01T10:00:00Z",
   "end_time": "2024-01-01T10:15:00Z",
   "inspection_type": "ONLINE",
@@ -1477,7 +1477,7 @@ Authorization: Bearer <access_token>
       "personnel_name": "李四"
     },
   "inspector_certificate_number": "P001",
-  "inspector_name": "张三",
+  "inspector_name": "张伟",
   "start_time": "2024-01-01T10:00:00Z",
   "end_time": "2024-01-01T10:15:00Z",
   "inspection_type": "ONLINE",
@@ -1641,7 +1641,7 @@ Authorization: Bearer <access_token>
 ```json
 {
   "personnel_certificate_number": "ZHANG001",
-  "personnel_name": "张三",
+  "personnel_name": "张伟",
   "year": "2025",
   "total_duty_days": 18,
   "total_duty_hours": 30.0,
@@ -1672,7 +1672,7 @@ Authorization: Bearer <access_token>
 {
   "year": "2025",
   "personnel_certificate_number": "ZHANG001",
-  "personnel_name": "张三",
+  "personnel_name": "张伟",
   "time_distribution": [
     { "hour": 0, "count": 2 },
     { "hour": 1, "count": 1 },
@@ -1714,7 +1714,7 @@ Authorization: Bearer <access_token>
     {
       "duty_id": "1",
       "staff_certificate_number": "ZHANG001",
-      "staff_name": "张三",
+      "staff_name": "张伟",
       "start_time": "2025-01-01T08:00:00",
       "end_time": "2025-01-01T10:00:00",
       "holiday_name": "元旦",
@@ -1743,7 +1743,7 @@ Authorization: Bearer <access_token>
 ```json
 {
   "personnel_certificate_number": "ZHANG001",
-  "personnel_name": "张三",
+  "personnel_name": "张伟",
   "year": "2025",
   "total_duty_hours": 30.15,
   "dept_total_hour": 42.18,
@@ -1775,7 +1775,7 @@ Authorization: Bearer <access_token>
 ```json
 {
   "personnel_id": "ZHANG001",
-  "personnel_name": "张三",
+  "personnel_name": "张伟",
   "year": "2025",
   "total_duty_days": 18,
   "total_duty_hours": 30.0,
@@ -1807,7 +1807,7 @@ Authorization: Bearer <access_token>
 ```json
 {
   "personnel_certificate_number": "ZHANG001",
-  "personnel_name": "张三",
+  "personnel_name": "张伟",
   "year": "2025",
   "max_temperature": { "value": 38.5, "record_time": "2025-07-20T14:00:00", "duty_id": "1" },
   "min_temperature": { "value": -12.0, "record_time": "2025-01-18T04:04:00", "duty_id": "2" },
@@ -1891,7 +1891,7 @@ Authorization: Bearer <access_token>
       "dept_name": "测试部门",
       "device_id": "SAFE001",
       "applicant_certificate_number": "123456",
-      "applicant_name": "张三",
+      "applicant_name": "张伟",
       "application_time": "2024-01-01T08:30:00Z",
       "application_type": "01",
       "application_type_name": "工位申请",
@@ -2010,7 +2010,7 @@ Authorization: Bearer <access_token>
   "dept_name": "测试部门",
   "device_id": "SAFE001",
   "applicant_certificate_number": "123456",
-  "applicant_name": "张三",
+  "applicant_name": "张伟",
   "applicant_position": "主任",
   "application_time": "2024-01-01T08:30:00Z",
   "application_type": "01",
@@ -2267,7 +2267,7 @@ Authorization: Bearer <access_token>
       "dept_name": "技术部",
       "device_id": "DEV123456",
       "applicant_certificate_number": "PER001",
-      "applicant_name": "张三",
+      "applicant_name": "张伟",
       "authorizer_certificate_number": "PER002",
       "authorizer_name": "李四",
       "application_time": "2024-01-01T09:00:00Z",
@@ -2311,7 +2311,7 @@ Authorization: Bearer <access_token>
   "dept_name": "技术部",
   "device_id": "DEV123456",
   "applicant_certificate_number": "PER001",
-  "applicant_name": "张三",
+  "applicant_name": "张伟",
   "authorizer_certificate_number": "PER002",
   "authorizer_name": "李四",
   "application_time": "2024-01-01T09:00:00Z",

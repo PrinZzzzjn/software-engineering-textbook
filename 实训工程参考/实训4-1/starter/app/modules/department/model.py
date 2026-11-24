@@ -11,5 +11,5 @@ class Department:
 
 
 TABLE: list[Department] = [
-    Department(dept_code="D01", full_name="一中队", address="一号楼"),
+    Department(dept_code="D001", full_name="一中队", address="一号营区"),
 ]
