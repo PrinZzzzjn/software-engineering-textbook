@@ -7,6 +7,20 @@
 字段与接口契约一致：dept_code / full_name / address。
 """
 
+
+def _load_case_data():
+    """读取仓库统一案例数据；找不到时回落到本文件内置常量。"""
+    import json
+    from pathlib import Path
+    candidates = [
+        Path(__file__).resolve().parents[n] / "data" / "case_data.json"
+        for n in range(1, 9)
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return json.loads(candidate.read_text(encoding="utf-8"))
+    return {}
+
 import pandas as pd
 import streamlit as st
 

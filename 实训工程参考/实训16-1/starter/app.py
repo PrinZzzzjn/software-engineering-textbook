@@ -8,6 +8,20 @@ st.session_state。16-1 要做的是把它接到真实后端：删除假数据�
 新增 config.py 与 api_client.py，补登录、加载/空/错误三态。
 """
 
+
+def _load_case_data():
+    """读取仓库统一案例数据；找不到时回落到本文件内置常量。"""
+    import json
+    from pathlib import Path
+    candidates = [
+        Path(__file__).resolve().parents[n] / "data" / "case_data.json"
+        for n in range(1, 9)
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return json.loads(candidate.read_text(encoding="utf-8"))
+    return {}
+
 import pandas as pd
 import streamlit as st
 
